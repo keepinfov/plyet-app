@@ -1,0 +1,186 @@
+/* re:glass material — design tokens.
+   Material 3 color roles + glassmorphism, themed via data-* attributes on <html>.
+   Attributes: data-theme (light|dark), data-accent (blue|yellow|green|purple|red|teal|pink),
+   data-blur (on|off), data-transparency (on|off). */
+
+:root {
+  /* Light theme (default) */
+  --rg-surface: #F0F2F5;
+  --rg-on-surface: #1A1C1E;
+  --rg-primary: #0061A4;
+  --rg-on-primary: #ffffff;
+  --rg-surface-2: #E8ECF1;
+  --rg-outline: #DADCE0;
+  --rg-on-surface-variant: #444746;
+  --rg-danger: #D93025;
+  --rg-danger-glass: rgba(217,48,37,0.08);
+
+  /* Glass tints — slightly more visible */
+  --rg-glass-blue: rgba(66,133,244,0.22);
+  --rg-glass-red: rgba(234,67,53,0.22);
+  --rg-glass-yellow: rgba(251,188,5,0.22);
+  --rg-glass-green: rgba(52,168,83,0.22);
+  --rg-glass-purple: rgba(124,77,255,0.22);
+  --rg-glass-pink: rgba(233,30,99,0.22);
+  --rg-glass-cyan: rgba(0,172,193,0.22);
+  --rg-glass-orange: rgba(255,109,0,0.22);
+
+  /* Neon glass for completed state */
+  --rg-neon-green: rgba(0,200,100,0.42);
+  --rg-neon-red: rgba(255,69,58,0.42);
+
+  --rg-price-pos: #00C864;
+  --rg-price-neg: #FF453A;
+  --rg-spring-easing: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* Surfaces that need explicit theme colors */
+  --rg-sheet-bg: #ffffff;
+  --rg-overlay-bg: rgba(0,0,0,0.4);
+  --rg-topbar-bg: rgba(255,255,255,0.82);
+  --rg-card-text: rgba(0,0,0,0.85);
+  --rg-card-meta: rgba(0,0,0,0.4);
+  --rg-chip-bg: rgba(255,255,255,0.7);
+  --rg-snackbar-bg: #1A1C1E;
+  --rg-snackbar-glass-bg: rgba(26, 28, 30, 0.50);
+  --rg-snackbar-text: #F1F3F4;
+  --rg-sheet-glass-bg: rgba(255, 255, 255, 0.72);
+  --rg-topbar-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  --rg-pill-bg: #ffffff;
+
+  --rg-fab-bg: color-mix(in srgb, var(--rg-primary) 65%, transparent);
+  --rg-fab-bg-hover: color-mix(in srgb, var(--rg-primary) 80%, transparent);
+  --rg-glass-blur: blur(16px);
+  --rg-glass-blur-light: blur(8px);
+  --rg-primary-shadow: rgba(0,97,164,0.4);
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --rg-surface: #121416;
+  --rg-on-surface: #E8EAED;
+  --rg-primary: #8AB4F8;
+  --rg-on-primary: #002D4E;
+  --rg-surface-2: #1E2025;
+  --rg-outline: #3C4043;
+  --rg-on-surface-variant: #BDC1C6;
+  --rg-danger: #F28B82;
+  --rg-danger-glass: rgba(242,139,130,0.12);
+
+  --rg-glass-blue: rgba(138,180,248,0.15);
+  --rg-glass-red: rgba(242,139,130,0.15);
+  --rg-glass-yellow: rgba(253,214,99,0.15);
+  --rg-glass-green: rgba(129,201,149,0.15);
+  --rg-glass-purple: rgba(197,168,247,0.15);
+  --rg-glass-pink: rgba(240,146,170,0.15);
+  --rg-glass-cyan: rgba(120,220,232,0.15);
+  --rg-glass-orange: rgba(255,167,93,0.15);
+
+  --rg-neon-green: rgba(0,200,100,0.3);
+  --rg-neon-red: rgba(255,69,58,0.3);
+
+  --rg-price-pos: #34D399;
+  --rg-price-neg: #F87171;
+
+  --rg-sheet-bg: #1E2025;
+  --rg-overlay-bg: rgba(0,0,0,0.6);
+  --rg-topbar-bg: rgba(18,20,22,0.85);
+  --rg-card-text: rgba(255,255,255,0.85);
+  --rg-card-meta: rgba(255,255,255,0.4);
+  --rg-chip-bg: rgba(255,255,255,0.06);
+  --rg-snackbar-bg: #E8EAED;
+  --rg-snackbar-glass-bg: rgba(232, 234, 237, 0.72);
+  --rg-snackbar-text: #1A1C1E;
+  --rg-sheet-glass-bg: rgba(30, 32, 37, 0.72);
+  --rg-topbar-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  --rg-pill-bg: #2A2D33;
+
+  --rg-glass-blur: blur(16px);
+  --rg-glass-blur-light: blur(8px);
+  --rg-primary-shadow: rgba(138,180,248,0.3);
+}
+
+/* Yellow accent */
+[data-accent="yellow"] {
+  --rg-primary: #E5A800;
+  --rg-on-primary: #3D2E00;
+  --rg-primary-shadow: rgba(229,168,0,0.4);
+}
+[data-accent="yellow"][data-theme="dark"] {
+  --rg-primary: #FFD54F;
+  --rg-on-primary: #3D2E00;
+  --rg-primary-shadow: rgba(255,213,79,0.35);
+}
+
+/* Green accent */
+[data-accent="green"] {
+  --rg-primary: #0D904F;
+  --rg-on-primary: #ffffff;
+  --rg-primary-shadow: rgba(13,144,79,0.4);
+}
+[data-accent="green"][data-theme="dark"] {
+  --rg-primary: #4ADE80;
+  --rg-on-primary: #0D3B1F;
+  --rg-primary-shadow: rgba(74,222,128,0.35);
+}
+
+/* Purple accent */
+[data-accent="purple"] {
+  --rg-primary: #7C4DFF;
+  --rg-on-primary: #ffffff;
+  --rg-primary-shadow: rgba(124,77,255,0.4);
+}
+[data-accent="purple"][data-theme="dark"] {
+  --rg-primary: #B388FF;
+  --rg-on-primary: #21005E;
+  --rg-primary-shadow: rgba(179,136,255,0.35);
+}
+
+/* Red accent */
+[data-accent="red"] {
+  --rg-primary: #C62828;
+  --rg-on-primary: #ffffff;
+  --rg-primary-shadow: rgba(198,40,40,0.4);
+}
+[data-accent="red"][data-theme="dark"] {
+  --rg-primary: #EF5350;
+  --rg-on-primary: #3B0000;
+  --rg-primary-shadow: rgba(239,83,80,0.35);
+}
+
+/* Teal accent */
+[data-accent="teal"] {
+  --rg-primary: #00897B;
+  --rg-on-primary: #ffffff;
+  --rg-primary-shadow: rgba(0,137,123,0.4);
+}
+[data-accent="teal"][data-theme="dark"] {
+  --rg-primary: #4DB6AC;
+  --rg-on-primary: #003731;
+  --rg-primary-shadow: rgba(77,182,172,0.35);
+}
+
+/* Pink accent */
+[data-accent="pink"] {
+  --rg-primary: #C2185B;
+  --rg-on-primary: #ffffff;
+  --rg-primary-shadow: rgba(194,24,91,0.4);
+}
+[data-accent="pink"][data-theme="dark"] {
+  --rg-primary: #F48FB1;
+  --rg-on-primary: #3E0021;
+  --rg-primary-shadow: rgba(244,143,177,0.35);
+}
+
+[data-blur="off"] {
+  --rg-glass-blur: none;
+  --rg-glass-blur-light: none;
+}
+
+[data-transparency="off"] {
+  --rg-sheet-glass-bg: var(--rg-sheet-bg);
+  --rg-topbar-bg: var(--rg-surface);
+  --rg-snackbar-glass-bg: var(--rg-snackbar-bg);
+  --rg-overlay-bg: rgba(0,0,0,0.6);
+  --rg-fab-bg: var(--rg-primary);
+  --rg-fab-bg-hover: var(--rg-primary);
+}

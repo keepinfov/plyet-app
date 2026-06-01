@@ -1,0 +1,14 @@
+{
+  "name": "plyet-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Plyet - a local-first personal budget app (Tauri + SvelteKit)",
+  "license": "MIT",
+  "scripts": {
+    "dev:app": "pnpm --filter Plyet dev",
+    "dev:kit": "pnpm --filter reglass-material dev",
+    "build:kit": "pnpm --filter reglass-material build",
+    "build:app": "pnpm --filter Plyet build",
+    "check": "pnpm -r check"
+  }
+}

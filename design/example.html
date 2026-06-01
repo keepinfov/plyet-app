@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget App — Material 3</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-roboto@5.1.0/400.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fontsource-roboto@5.1.0/500.css" rel="stylesheet">
+<style>
+  :root {
+    --md-primary: #1A73E8;
+    --md-on-primary: #FFFFFF;
+    --md-primary-container: #D2E3FC;
+    --md-on-primary-container: #062E6F;
+    --md-secondary: #0D904F;
+    --md-on-secondary: #FFFFFF;
+    --md-secondary-container: #C6EED8;
+    --md-on-secondary-container: #003D1A;
+    --md-tertiary: #F9AB00;
+    --md-tertiary-container: #FEF7E0;
+    --md-error: #D93025;
+    --md-error-container: #FCE8E6;
+    --md-on-error: #FFFFFF;
+    --md-surface: #FFFFFF;
+    --md-surface-1: #F8F9FB;
+    --md-surface-2: #F0F2F5;
+    --md-surface-3: #E8ECF1;
+    --md-surface-variant: #E8EDF2;
+    --md-on-surface: #1F1F1F;
+    --md-on-surface-variant: #5F6368;
+    --md-outline: #DADCE0;
+    --md-outline-variant: #C4C7CC;
+    --md-inverse-surface: #303134;
+    --md-inverse-on-surface: #F1F3F4;
+    --md-radius-sm: 12px;
+    --md-radius-md: 16px;
+    --md-radius-lg: 24px;
+    --md-radius-xl: 28px;
+    --md-radius-full: 9999px;
+    --shadow-1: 0 1px 2px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.06);
+    --shadow-2: 0 2px 8px rgba(0,0,0,.10), 0 1px 3px rgba(0,0,0,.06);
+    --shadow-3: 0 4px 16px rgba(0,0,0,.12), 0 2px 4px rgba(0,0,0,.06);
+    --shadow-glow-blue: 0 0 18px rgba(26,115,232,.35);
+    --shadow-glow-green: 0 0 18px rgba(13,144,79,.35);
+    --shadow-glow-red: 0 0 18px rgba(217,48,37,.35);
+    --shadow-glow-amber: 0 0 18px rgba(249,171,0,.35);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Google Sans', 'Roboto', sans-serif;
+    background: linear-gradient(170deg, #E8F0FE 0%, #F3E8FD 30%, #FCE4EC 60%, #FFF3E0 100%);
+    color: var(--md-on-surface);
+    min-height: 100vh;
+    background-attachment: fixed;
+  }
+
+  .app-container {
+    max-width: 500px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    min-height: 100vh;
+    box-shadow: 0 0 60px rgba(26,115,232,0.08), 0 0 20px rgba(0,0,0,0.04);
+    padding-bottom: 100px;
+    position: relative;
+  }
+
+  /* Top App Bar */
+  .top-bar {
+    padding: 18px 20px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(218,220,224,0.4);
+  }
+
+  .top-bar-title {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--md-on-surface);
+    background: linear-gradient(135deg, #1A73E8 0%, #7C4DFF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--md-surface-2);
+    color: var(--md-on-surface-variant);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .icon-btn:hover {
+    background: var(--md-primary-container);
+    color: var(--md-primary);
+  }
+
+  .icon-btn svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+
+  /* Budget Switcher */
+  .budget-switcher {
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .budget-chip {
+    flex-shrink: 0;
+    padding: 10px 20px;
+    border-radius: var(--md-radius-full);
+    border: 1.5px solid var(--md-outline);
+    background: rgba(255,255,255,0.7);
+    color: var(--md-on-surface-variant);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .budget-chip:hover {
+    background: var(--md-primary-container);
+    border-color: var(--md-primary);
+    color: var(--md-primary);
+  }
+
+  .budget-chip.active {
+    background: linear-gradient(135deg, #1A73E8, #4285F4);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 18px rgba(26,115,232,0.4);
+    transform: translateY(-2px);
+  }
+
+  /* Chart Section */
+  .chart-section {
+    padding: 28px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(26,115,232,0.04) 0%, transparent 70%);
+  }
+
+  .chart-container {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .chart-glow {
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    filter: blur(20px);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #budgetSvg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .chart-center-text {
+    position: absolute;
+    text-align: center;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .chart-total {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--md-on-surface);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+
+  .chart-remaining {
+    font-size: 13px;
+    color: var(--md-on-surface-variant);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .chart-remaining span {
+    font-weight: 600;
+    color: var(--md-on-surface);
+  }
+
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 10px;
+    margin-top: 28px;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--md-on-surface-variant);
+    padding: 7px 14px;
+    border-radius: var(--md-radius-full);
+    transition: transform 0.2s;
+  }
+
+  .legend-item:hover {
+    transform: translateY(-2px);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Tabs */
+  .tabs-container {
+    display: flex;
+    padding: 0 16px;
+    gap: 4px;
+    margin-top: 8px;
+    background: var(--md-surface-2);
+    border-radius: var(--md-radius-full);
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 4px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md-on-surface-variant);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    position: relative;
+    font-family: 'Roboto', sans-serif;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--md-radius-full);
+  }
+
+  .tab.active {
+    color: var(--md-primary);
+    background: white;
+    box-shadow: var(--shadow-1);
+  }
+
+  .tab.active::after {
+    display: none;
+  }
+
+  /* Cards Section */
+  .cards-section {
+    padding: 16px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: var(--md-on-surface-variant);
+    text-transform: uppercase;
+  }
+
+  .filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 14px;
+    border-radius: var(--md-radius-full);
+    border: 1px solid var(--md-outline);
+    background: white;
+    color: var(--md-primary);
+    font-size: 12px;
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover {
+    background: var(--md-primary-container);
+    box-shadow: var(--shadow-1);
+  }
+
+  .filter-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+
+  .cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .expense-card {
+    background: white;
+    border-radius: var(--md-radius-lg);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border: 1px solid var(--md-outline);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .expense-card:hover {
+    box-shadow: var(--shadow-2);
+    transform: translateY(-1px);
+  }
+
+  .expense-card:active {
+    transform: scale(0.98);
+    background: var(--md-surface-2);
+  }
+
+  .expense-card.completed {
+    opacity: 0.45;
+    border-left: 4px solid var(--md-secondary) !important;
+  }
+
+  .expense-card.completed .card-title,
+  .expense-card.completed .card-amount {
+    text-decoration: line-through;
+  }
+
+  .expense-card.planned {
+    background: var(--md-surface-1);
+    border-color: var(--md-outline);
+    border-left: 4px solid #b0b0b0;
+  }
+
+  .expense-card.planned .card-icon {
+    opacity: 0.6;
+    filter: grayscale(40%);
+  }
+
+  .expense-card.conducted {
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .card-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--md-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 3px;
+  }
+
+  .card-date {
+    font-size: 12px;
+    color: var(--md-on-surface-variant);
+  }
+
+  .card-link {
+    font-size: 12px;
+    color: var(--md-primary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .card-link:hover {
+    text-decoration: underline;
+  }
+
+  .card-amount {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--md-on-surface);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.3px;
+  }
+
+  .card-amount.negative {
+    color: var(--md-on-surface);
+  }
+
+  .card-amount.positive {
+    color: #0D904F;
+  }
+
+  .card-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--md-outline);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-check:hover {
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 4px rgba(26,115,232,0.12);
+  }
+
+  .card-check.checked {
+    background: var(--md-secondary);
+    border-color: var(--md-secondary);
+    box-shadow: 0 0 0 4px rgba(13,144,79,0.15);
+  }
+
+  .card-check svg {
+    width: 14px;
+    height: 14px;
+    fill: white;
+    display: none;
+  }
+
+  .card-check.checked svg {
+    display: block;
+  }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 60px;
+    height: 60px;
+    border-radius: var(--md-radius-lg);
+    background: linear-gradient(135deg, #1A73E8 0%, #4285F4 50%, #7C4DFF 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(26,115,232,0.4);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 200;
+  }
+
+  .fab:hover {
+    box-shadow: 0 8px 30px rgba(26,115,232,0.5);
+    transform: scale(1.08);
+  }
+
+  .fab:active {
+    transform: scale(0.94);
+  }
+
+  .fab svg {
+    width: 26px;
+    height: 26px;
+    fill: currentColor;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 300;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal-sheet {
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    background: white;
+    border-radius: var(--md-radius-xl) var(--md-radius-xl) 0 0;
+    padding: 24px;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.1);
+  }
+
+  .modal-overlay.open .modal-sheet {
+    transform: translateY(0);
+  }
+
+  .modal-handle {
+    width: 36px;
+    height: 5px;
+    background: var(--md-outline);
+    border-radius: 3px;
+    margin: 0 auto 22px;
+  }
+
+  .modal-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--md-on-surface);
+    margin-bottom: 22px;
+    text-align: center;
+    letter-spacing: -0.3px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--md-primary);
+    margin-bottom: 6px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: var(--md-radius-sm);
+    border: 1.5px solid var(--md-outline);
+    background: var(--md-surface-1);
+    color: var(--md-on-surface);
+    font-size: 16px;
+    font-family: 'Roboto', sans-serif;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .form-input:focus {
+    border-color: var(--md-primary);
+    border-width: 2px;
+    padding: 12px 15px;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(26,115,232,0.1);
+  }
+
+  .form-input::placeholder {
+    color: var(--md-on-surface-variant);
+    opacity: 0.5;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .form-row .form-group {
+    flex: 1;
+  }
+
+  .form-select {
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: var(--md-radius-sm);
+    border: 1.5px solid var(--md-outline);
+    background: var(--md-surface-1);
+    color: var(--md-on-surface);
+    font-size: 16px;
+    font-family: 'Roboto', sans-serif;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%235F6368'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: all 0.2s;
+  }
+
+  .form-select:focus {
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 4px rgba(26,115,232,0.1);
+  }
+
+  .type-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    background: var(--md-surface-2);
+    border-radius: var(--md-radius-full);
+    padding: 4px;
+  }
+
+  .type-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: var(--md-radius-full);
+    border: none;
+    background: transparent;
+    color: var(--md-on-surface-variant);
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .type-btn.active-expense {
+    background: white;
+    color: var(--md-error);
+    box-shadow: var(--shadow-1);
+    font-weight: 600;
+  }
+
+  .type-btn.active-income {
+    background: white;
+    color: #0D904F;
+    box-shadow: var(--shadow-1);
+    font-weight: 600;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+
+  .btn-text {
+    padding: 12px 24px;
+    border-radius: var(--md-radius-full);
+    border: none;
+    background: transparent;
+    color: var(--md-primary);
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+
+  .btn-text:hover {
+    background: var(--md-primary-container);
+  }
+
+  .btn-filled {
+    padding: 12px 28px;
+    border-radius: var(--md-radius-full);
+    border: none;
+    background: linear-gradient(135deg, #1A73E8, #4285F4);
+    color: white;
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    box-shadow: 0 2px 10px rgba(26,115,232,0.35);
+  }
+
+  .btn-filled:hover {
+    box-shadow: 0 4px 18px rgba(26,115,232,0.45);
+    transform: translateY(-1px);
+  }
+
+  /* Budget Modal */
+  .budget-list-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: var(--md-radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 4px;
+  }
+
+  .budget-list-item:hover {
+    background: var(--md-primary-container);
+  }
+
+  .budget-list-item.selected {
+    background: var(--md-primary-container);
+    box-shadow: inset 0 0 0 2px var(--md-primary);
+  }
+
+  .budget-list-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--md-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: var(--md-surface-2);
+  }
+
+  .budget-list-item.selected .budget-list-icon {
+    background: var(--md-primary);
+    color: white;
+  }
+
+  .budget-list-info {
+    flex: 1;
+  }
+
+  .budget-list-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--md-on-surface);
+  }
+
+  .budget-list-amount {
+    font-size: 12px;
+    color: var(--md-on-surface-variant);
+    margin-top: 2px;
+  }
+
+  .budget-list-check {
+    width: 22px;
+    height: 22px;
+  }
+
+  .new-budget-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--md-radius-md);
+    border: 2px dashed var(--md-outline);
+    background: transparent;
+    color: var(--md-primary);
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+
+  .new-budget-btn:hover {
+    background: var(--md-primary-container);
+    border-color: var(--md-primary);
+  }
+
+  .new-budget-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--md-on-surface-variant);
+  }
+
+  .empty-state svg {
+    width: 72px;
+    height: 72px;
+    fill: var(--md-outline);
+    margin-bottom: 14px;
+    opacity: 0.5;
+  }
+
+  .empty-state p {
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  /* Snackbar */
+  .snackbar {
+    position: fixed;
+    bottom: 96px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--md-inverse-surface);
+    color: var(--md-inverse-on-surface);
+    padding: 12px 24px;
+    border-radius: var(--md-radius-full);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-3);
+    z-index: 400;
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+  }
+
+  .snackbar.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  .snackbar.success {
+    background: #0D904F;
+    color: white;
+  }
+
+  .snackbar.warning {
+    background: #F9AB00;
+    color: #1F1F1F;
+  }
+
+  /* Progress bar */
+  .progress-bar-container {
+    width: 100%;
+    height: 5px;
+    background: var(--md-surface-2);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--md-outline);
+    border-radius: 2px;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .expense-card {
+    animation: fadeInUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .expense-card:nth-child(1) { animation-delay: 0.02s; }
+  .expense-card:nth-child(2) { animation-delay: 0.05s; }
+  .expense-card:nth-child(3) { animation-delay: 0.08s; }
+  .expense-card:nth-child(4) { animation-delay: 0.11s; }
+  .expense-card:nth-child(5) { animation-delay: 0.14s; }
+  .expense-card:nth-child(6) { animation-delay: 0.17s; }
+  .expense-card:nth-child(7) { animation-delay: 0.20s; }
+  .expense-card:nth-child(8) { animation-delay: 0.23s; }
+  .expense-card:nth-child(9) { animation-delay: 0.26s; }
+  .expense-card:nth-child(10) { animation-delay: 0.29s; }
+
+  /* Category color picker in modal */
+  .color-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .color-option {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .color-option:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .color-option.selected {
+    border-color: var(--md-on-surface);
+    box-shadow: 0 0 0 3px white, 0 0 0 5px currentColor;
+  }
+
+  @media (min-width: 481px) {
+    .app-container {
+      border-left: 1px solid rgba(218,220,224,0.5);
+      border-right: 1px solid rgba(218,220,224,0.5);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container" id="app">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="top-bar-title">Бюджеты</span>
+    <div class="top-bar-actions">
+      <button class="icon-btn" onclick="openBudgetModal()" title="Выбрать бюджет">
+        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Budget Switcher -->
+  <div class="budget-switcher" id="budgetSwitcher"></div>
+
+  <!-- Chart Section -->
+  <div class="chart-section">
+    <div class="chart-container">
+      <svg id="budgetSvg" viewBox="0 0 240 240">
+      </svg>
+      <div class="chart-center-text">
+        <div class="chart-total" id="chartTotal">0 ₽</div>
+        <div class="chart-remaining" id="chartRemaining">из <span>0 ₽</span></div>
+      </div>
+    </div>
+    <div class="chart-legend" id="chartLegend"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button class="tab active" data-tab="expenses" onclick="switchTab('expenses')">Траты</button>
+    <button class="tab" data-tab="income" onclick="switchTab('income')">Пополнения</button>
+    <button class="tab" data-tab="all" onclick="switchTab('all')">Все</button>
+  </div>
+
+  <!-- Cards Section -->
+  <div class="cards-section">
+    <div class="section-header">
+      <span class="section-title" id="sectionTitle">Траты</span>
+      <button class="filter-btn" onclick="toggleFilter()">
+        <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm3 7h12v2H6v-2zm4 7h4v2h-4v-2z"/></svg>
+        <span id="filterLabel">Все</span>
+      </button>
+    </div>
+    <div class="cards-list" id="cardsList"></div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openAddModal()">
+  <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+</button>
+
+<!-- Add Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Добавить запись</div>
+
+    <div class="type-toggle">
+      <button class="type-btn active-expense" id="typeExpense" onclick="setType('expense')">Расход</button>
+      <button class="type-btn" id="typeIncome" onclick="setType('income')">Доход</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Название</label>
+      <input class="form-input" id="inputName" placeholder="Название...">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Сумма (₽)</label>
+        <input class="form-input" id="inputAmount" type="number" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Дата</label>
+        <input class="form-input" id="inputDate" type="date">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Категория</label>
+      <select class="form-select" id="inputCategory">
+        <option value="food"> Еда</option>
+        <option value="transport">🚗 Транспорт</option>
+        <option value="entertainment"> Развлечения</option>
+        <option value="shopping">🛍️ Покупки</option>
+        <option value="bills">📱 Коммунальные</option>
+        <option value="salary">💰 Зарплата</option>
+        <option value="other">📦 Другое</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Ссылка (необязательно)</label>
+      <input class="form-input" id="inputLink" placeholder="https://...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Статус</label>
+      <select class="form-select" id="inputStatus">
+        <option value="planned">Планируется (серый)</option>
+        <option value="conducted">Проведено (цветной)</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-text" onclick="closeAddModal()">Отмена</button>
+      <button class="btn-filled" onclick="saveItem()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget Modal -->
+<div class="modal-overlay" id="budgetModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Выберите бюджет</div>
+    <div id="budgetList"></div>
+    <button class="new-budget-btn" onclick="createNewBudget()">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Новый бюджет
+    </button>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn-text" onclick="closeBudgetModal()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Budget Modal -->
+<div class="modal-overlay" id="newBudgetModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Новый бюджет</div>
+    <div class="form-group">
+      <label class="form-label">Название</label>
+      <input class="form-input" id="newBudgetName" placeholder="Например: Февраль 2025">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Лимит (₽)</label>
+      <input class="form-input" id="newBudgetLimit" type="number" placeholder="50000" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Иконка</label>
+      <select class="form-select" id="newBudgetIcon">
+        <option value="💰">💰 Деньги</option>
+        <option value="🏠">🏠 Дом</option>
+        <option value="">🚗 Авто</option>
+        <option value="✈️">️ Путешествие</option>
+        <option value="🎓"> Учёба</option>
+        <option value="📱"> Техника</option>
+        <option value="🎮">🎮 Игры</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-text" onclick="closeNewBudgetModal()">Отмена</button>
+      <button class="btn-filled" onclick="saveNewBudget()">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Snackbar -->
+<div class="snackbar" id="snackbar"></div>
+
+<script>
+// ===== DATA =====
+const CATEGORIES = {
+  food: { name: 'Еда', emoji: '🍔', color: '#FF6D00' },
+  transport: { name: 'Транспорт', emoji: '🚗', color: '#1A73E8' },
+  entertainment: { name: 'Развлечения', emoji: '🎮', color: '#D93025' },
+  shopping: { name: 'Покупки', emoji: '🛍️', color: '#E91E63' },
+  bills: { name: 'Коммунальные', emoji: '📱', color: '#7C4DFF' },
+  salary: { name: 'Зарплата', emoji: '💰', color: '#0D904F' },
+  other: { name: 'Другое', emoji: '📦', color: '#00ACC1' }
+};
+
+let budgets = [
+  {
+    id: 1,
+    name: 'Февраль 2025',
+    limit: 50000,
+    icon: '💰',
+    items: [
+      { id: 1, name: 'Продукты в Пятёрочке', amount: 3200, category: 'food', date: '2025-02-03', link: '', status: 'conducted', completed: false },
+      { id: 2, name: 'Метро (абонемент)', amount: 2400, category: 'transport', date: '2025-02-01', link: '', status: 'conducted', completed: false },
+      { id: 3, name: 'Netflix подписка', amount: 799, category: 'entertainment', date: '2025-02-05', link: 'https://netflix.com', status: 'conducted', completed: false },
+      { id: 4, name: 'Новая клавиатура', amount: 4500, category: 'shopping', date: '2025-02-10', link: 'https://example.com/kbd', status: 'planned', completed: false },
+      { id: 5, name: 'ЖКХ', amount: 5800, category: 'bills', date: '2025-02-15', link: '', status: 'planned', completed: false },
+      { id: 6, name: 'Ужин в ресторане', amount: 3500, category: 'food', date: '2025-02-14', link: '', status: 'planned', completed: false },
+      { id: 7, name: 'Такси в аэропорт', amount: 1200, category: 'transport', date: '2025-02-20', link: '', status: 'planned', completed: false },
+      { id: 8, name: 'Зарплата', amount: 85000, category: 'salary', date: '2025-02-01', link: '', status: 'conducted', completed: false, type: 'income' },
+      { id: 9, name: 'Фриланс', amount: 15000, category: 'other', date: '2025-02-15', link: '', status: 'conducted', completed: false, type: 'income' },
+    ]
+  },
+  {
+    id: 2,
+    name: 'Путешествие',
+    limit: 120000,
+    icon: '✈️',
+    items: [
+      { id: 10, name: 'Авиабилеты Москва-Бали', amount: 65000, category: 'transport', date: '2025-03-01', link: '', status: 'planned', completed: false },
+      { id: 11, name: 'Отель 14 ночей', amount: 42000, category: 'other', date: '2025-03-01', link: 'https://booking.com', status: 'planned', completed: false },
+      { id: 12, name: 'Экскурсии', amount: 8000, category: 'entertainment', date: '2025-03-05', link: '', status: 'planned', completed: false },
+      { id: 13, name: 'Страховка', amount: 3500, category: 'other', date: '2025-02-20', link: '', status: 'conducted', completed: false },
+    ]
+  },
+  {
+    id: 3,
+    name: 'Ремонт',
+    limit: 200000,
+    icon: '🏠',
+    items: [
+      { id: 14, name: 'Краска для стен', amount: 8000, category: 'shopping', date: '2025-02-05', link: '', status: 'conducted', completed: false },
+      { id: 15, name: 'Ламинат', amount: 25000, category: 'shopping', date: '2025-02-10', link: '', status: 'conducted', completed: false },
+      { id: 16, name: 'Работа мастера', amount: 45000, category: 'other', date: '2025-02-15', link: '', status: 'planned', completed: false },
+      { id: 17, name: 'Светильники', amount: 12000, category: 'shopping', date: '2025-02-20', link: 'https://example.com/lamps', status: 'planned', completed: false },
+    ]
+  }
+];
+
+let currentBudgetId = 1;
+let currentTab = 'expenses';
+let currentFilter = 'all';
+let currentType = 'expense';
+
+// ===== INIT =====
+function init() {
+  renderBudgetSwitcher();
+  renderChart();
+  renderCards();
+}
+
+// ===== BUDGET SWITCHER =====
+function renderBudgetSwitcher() {
+  const container = document.getElementById('budgetSwitcher');
+  container.innerHTML = budgets.map(b => `
+    <button class="budget-chip ${b.id === currentBudgetId ? 'active' : ''}" onclick="switchBudget(${b.id})">
+      ${b.icon} ${b.name}
+    </button>
+  `).join('');
+}
+
+function switchBudget(id) {
+  currentBudgetId = id;
+  renderBudgetSwitcher();
+  renderChart();
+  renderCards();
+}
+
+// ===== CHART =====
+function renderChart() {
+  const budget = budgets.find(b => b.id === currentBudgetId);
+  if (!budget) return;
+
+  const svg = document.getElementById('budgetSvg');
+  svg.setAttribute('viewBox', '0 0 240 240');
+  svg.innerHTML = ''; 
+
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+  filter.setAttribute("id", "segmentGlow");
+  filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>';
+  defs.appendChild(filter);
+  svg.appendChild(defs);
+
+  const expenseItems = budget.items.filter(i => !i.type || i.type === 'expense');
+  const totalSpent = expenseItems.reduce((s, i) => s + i.amount, 0);
+
+  const catTotals = {};
+  expenseItems.forEach(item => {
+    if (!catTotals[item.category]) catTotals[item.category] = 0;
+    catTotals[item.category] += item.amount;
+  });
+
+  const catEntries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+
+  const size = 240;
+  const m = 26; 
+  const r = 42; 
+  const sw = 38;
+  
+  const d = `
+    M ${m + r},${m}
+    L ${size - m - r},${m}
+    A ${r},${r} 0 0 1 ${size - m},${m + r}
+    L ${size - m},${size - m - r}
+    A ${r},${r} 0 0 1 ${size - m - r},${size - m}
+    L ${m + r},${size - m}
+    A ${r},${r} 0 0 1 ${m},${size - m - r}
+    L ${m},${m + r}
+    A ${r},${r} 0 0 1 ${m + r},${m}
+    Z
+  `.replace(/\s+/g, ' ').trim();
+
+  const bgPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  bgPath.setAttribute("d", d);
+  bgPath.setAttribute("fill", "none");
+  bgPath.setAttribute("stroke", "#E8ECF1");
+  bgPath.setAttribute("stroke-width", sw.toString());
+  bgPath.setAttribute("stroke-linecap", "round");
+  bgPath.setAttribute("stroke-linejoin", "round");
+  svg.appendChild(bgPath);
+
+  if (totalSpent > 0) {
+    const tempPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    tempPath.setAttribute("d", d);
+    document.body.appendChild(tempPath);
+    const totalLength = tempPath.getTotalLength();
+    document.body.removeChild(tempPath);
+
+    let currentOffset = 0;
+    catEntries.forEach(([catKey, catAmount]) => {
+      const cat = CATEGORIES[catKey];
+      const segmentLength = (catAmount / totalSpent) * totalLength;
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", cat.color);
+      path.setAttribute("stroke-width", sw.toString());
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      path.setAttribute("stroke-dasharray", `${segmentLength} ${totalLength}`);
+      path.setAttribute("stroke-dashoffset", -currentOffset);
+      path.setAttribute("filter", "url(#segmentGlow)");
+      
+      svg.appendChild(path);
+      currentOffset += segmentLength;
+    });
+  }
+
+  const remaining = budget.limit - totalSpent;
+  document.getElementById('chartTotal').textContent = formatMoney(totalSpent);
+  document.getElementById('chartRemaining').innerHTML = remaining >= 0 
+    ? `Осталось <span style="color:#0D904F; font-weight:700">${formatMoney(remaining)}</span>`
+    : `Лимит превышен на <span style="color:#D93025; font-weight:700">${formatMoney(Math.abs(remaining))}</span>`;
+
+  const legendEl = document.getElementById('chartLegend');
+  legendEl.innerHTML = catEntries.map(([catKey, catAmount]) => {
+    const cat = CATEGORIES[catKey];
+    const pct = totalSpent > 0 ? Math.round((catAmount / totalSpent) * 100) : 0;
+    const tint = cat.color + '18';
+    return `<div class="legend-item" style="background:${tint}; color:${cat.color}; border:1px solid ${cat.color}25">
+      <div class="legend-dot" style="background:${cat.color}; box-shadow:0 0 6px ${cat.color}50"></div>
+      ${cat.emoji} ${cat.name} · ${pct}%
+    </div>`;
+  }).join('');
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  renderCards();
+}
+
+// ===== FILTER =====
+function toggleFilter() {
+  const filters = ['all', 'planned', 'conducted', 'completed'];
+  const labels = { all: 'Все', planned: 'План', conducted: 'Факт', completed: 'Завершено' };
+  const idx = filters.indexOf(currentFilter);
+  currentFilter = filters[(idx + 1) % filters.length];
+  document.getElementById('filterLabel').textContent = labels[currentFilter];
+  renderCards();
+}
+
+// ===== CARDS =====
+function renderCards() {
+  const budget = budgets.find(b => b.id === currentBudgetId);
+  if (!budget) return;
+
+  let items = [...budget.items];
+
+  // Filter by tab
+  if (currentTab === 'expenses') {
+    items = items.filter(i => !i.type || i.type === 'expense');
+    document.getElementById('sectionTitle').textContent = 'Траты';
+  } else if (currentTab === 'income') {
+    items = items.filter(i => i.type === 'income');
+    document.getElementById('sectionTitle').textContent = 'Пополнения';
+  } else {
+    document.getElementById('sectionTitle').textContent = 'Все записи';
+  }
+
+  // Filter by status
+  if (currentFilter === 'planned') items = items.filter(i => i.status === 'planned');
+  else if (currentFilter === 'conducted') items = items.filter(i => i.status === 'conducted');
+  else if (currentFilter === 'completed') items = items.filter(i => i.completed);
+
+  const listEl = document.getElementById('cardsList');
+
+  if (items.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+        <p>Нет записей</p>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = items.map(item => {
+    const cat = CATEGORIES[item.category] || CATEGORIES.other;
+    const isIncome = item.type === 'income';
+    const isCompleted = item.completed;
+    const isPlanned = item.status === 'planned';
+    
+    let cardClass = 'expense-card ';
+    let cardStyle = '';
+    
+    if (isCompleted) {
+      cardClass += 'completed';
+      const tint = cat.color + '10';
+      cardStyle = `border-left: 4px solid var(--md-secondary); background: ${tint};`;
+    } else if (isPlanned) {
+      cardClass += 'planned';
+      cardStyle = `border-left: 4px solid #b0b0b0;`;
+    } else {
+      cardClass += 'conducted';
+      const tint = cat.color + '0D';
+      cardStyle = `border-left: 4px solid ${cat.color}; background: ${tint};`;
+    }
+
+    const dateStr = item.date ? formatDate(item.date) : '';
+    const linkHtml = item.link ? `<a class="card-link" href="${item.link}" target="_blank" onclick="event.stopPropagation()">🔗 Ссылка</a>` : '';
+
+    return `
+      <div class="${cardClass}" style="${cardStyle}" onclick="toggleComplete(${item.id})">
+        <div class="card-check ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleComplete(${item.id})">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+        </div>
+        <div class="card-icon" style="background:${isPlanned ? 'var(--md-outline)' : cat.color}">
+          <span>${cat.emoji}</span>
+        </div>
+        <div class="card-content">
+          <div class="card-title">${item.name}</div>
+          <div class="card-meta">
+            ${dateStr ? `<span class="card-date">${dateStr}</span>` : ''}
+            ${linkHtml}
+          </div>
+        </div>
+        <div class="card-amount ${isIncome ? 'positive' : 'negative'}">
+          ${isIncome ? '+' : ''}${formatMoney(item.amount)}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleComplete(itemId) {
+  const budget = budgets.find(b => b.id === currentBudgetId);
+  const item = budget?.items.find(i => i.id === itemId);
+  if (item) {
+    item.completed = !item.completed;
+    // If marking as completed, also mark as conducted if it was planned
+    if (item.completed && item.status === 'planned') {
+      item.status = 'conducted';
+    }
+    renderCards();
+    renderChart();
+    showSnackbar(item.completed ? 'Отмечено как купленное' : 'Возвращено в план');
+  }
+}
+
+// ===== MODALS =====
+function openAddModal() {
+  document.getElementById('addModal').classList.add('open');
+  document.getElementById('inputName').value = '';
+  document.getElementById('inputAmount').value = '';
+  document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('inputLink').value = '';
+  document.getElementById('inputCategory').value = 'food';
+  document.getElementById('inputStatus').value = 'planned';
+  setType('expense');
+}
+
+function closeAddModal() {
+  document.getElementById('addModal').classList.remove('open');
+}
+
+function setType(type) {
+  currentType = type;
+  const expBtn = document.getElementById('typeExpense');
+  const incBtn = document.getElementById('typeIncome');
+  expBtn.className = 'type-btn' + (type === 'expense' ? ' active-expense' : '');
+  incBtn.className = 'type-btn' + (type === 'income' ? ' active-income' : '');
+}
+
+function saveItem() {
+  const name = document.getElementById('inputName').value.trim();
+  const amount = parseFloat(document.getElementById('inputAmount').value);
+  const date = document.getElementById('inputDate').value;
+  const category = document.getElementById('inputCategory').value;
+  const link = document.getElementById('inputLink').value.trim();
+  const status = document.getElementById('inputStatus').value;
+
+  if (!name || !amount || amount <= 0) {
+    showSnackbar('Заполните название и сумму');
+    return;
+  }
+
+  const budget = budgets.find(b => b.id === currentBudgetId);
+  if (!budget) return;
+
+  const maxId = Math.max(...budgets.flatMap(b => b.items.map(i => i.id)), 0);
+  const newItem = {
+    id: maxId + 1,
+    name,
+    amount,
+    category,
+    date,
+    link,
+    status,
+    completed: status === 'conducted',
+    type: currentType
+  };
+
+  budget.items.push(newItem);
+  closeAddModal();
+  renderCards();
+  renderChart();
+  showSnackbar('Запись добавлена ✓');
+}
+
+function openBudgetModal() {
+  const listEl = document.getElementById('budgetList');
+  listEl.innerHTML = budgets.map(b => {
+    const spent = b.items.filter(i => !i.type || i.type === 'expense').reduce((s, i) => s + i.amount, 0);
+    return `
+      <div class="budget-list-item ${b.id === currentBudgetId ? 'selected' : ''}" onclick="selectBudgetFromModal(${b.id})">
+        <div class="budget-list-icon" style="background:var(--md-primary-container)">${b.icon}</div>
+        <div class="budget-list-info">
+          <div class="budget-list-name">${b.name}</div>
+          <div class="budget-list-amount">${formatMoney(spent)} / ${formatMoney(b.limit)}</div>
+        </div>
+        ${b.id === currentBudgetId ? '<svg class="budget-list-check" viewBox="0 0 24 24" fill="var(--md-primary)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>' : ''}
+      </div>`;
+  }).join('');
+  document.getElementById('budgetModal').classList.add('open');
+}
+
+function closeBudgetModal() {
+  document.getElementById('budgetModal').classList.remove('open');
+}
+
+function selectBudgetFromModal(id) {
+  currentBudgetId = id;
+  closeBudgetModal();
+  renderBudgetSwitcher();
+  renderChart();
+  renderCards();
+}
+
+function createNewBudget() {
+  closeBudgetModal();
+  document.getElementById('newBudgetModal').classList.add('open');
+  document.getElementById('newBudgetName').value = '';
+  document.getElementById('newBudgetLimit').value = '';
+}
+
+function closeNewBudgetModal() {
+  document.getElementById('newBudgetModal').classList.remove('open');
+}
+
+function saveNewBudget() {
+  const name = document.getElementById('newBudgetName').value.trim();
+  const limit = parseFloat(document.getElementById('newBudgetLimit').value);
+  const icon = document.getElementById('newBudgetIcon').value;
+
+  if (!name || !limit || limit <= 0) {
+    showSnackbar('Заполните название и лимит');
+    return;
+  }
+
+  const maxId = Math.max(...budgets.map(b => b.id), 0);
+  const newBudget = {
+    id: maxId + 1,
+    name,
+    limit,
+    icon,
+    items: []
+  };
+
+  budgets.push(newBudget);
+  currentBudgetId = newBudget.id;
+  closeNewBudgetModal();
+  renderBudgetSwitcher();
+  renderChart();
+  renderCards();
+  showSnackbar('Бюджет создан ✓');
+}
+
+// ===== HELPERS =====
+function formatMoney(amount) {
+  return new Intl.NumberFormat('ru-RU').format(Math.round(amount)) + ' ₽';
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function showSnackbar(msg) {
+  const el = document.getElementById('snackbar');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.classList.remove('open');
+    }
+  });
+});
+
+// Init
+init();
+</script>
+
+</body>
+</html>

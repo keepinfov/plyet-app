@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+
+# Workspace package build output
+packages/*/dist/
+
+# SvelteKit / Vite
+.svelte-kit/
+/build/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Rust / Cargo
+target/
+
+# Tauri generated
+app/src-tauri/gen/schemas/
+
+# Android build artifacts (mobile gen project)
+.gradle/
+**/gen/android/build/
+**/gen/android/app/build/
+**/gen/android/buildSrc/build/
+**/gen/android/.cxx/
+local.properties
+*.apk
+*.aab
+*.ipa
+
+# Keystore / signing
+*.keystore
+*.jks
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Nix / direnv
+.direnv/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

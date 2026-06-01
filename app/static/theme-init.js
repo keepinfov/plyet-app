@@ -1,0 +1,1 @@
+try{var p="plyet",d=document.documentElement,g=function(k){return localStorage.getItem(p+'-'+k)};d.setAttribute('data-theme',g('theme')||'light');d.setAttribute('data-accent',g('accent')||'blue');d.setAttribute('data-blur',g('blur')==='off'?'off':'on');d.setAttribute('data-transparency',g('transparency')==='off'?'off':'on');}catch(e){}

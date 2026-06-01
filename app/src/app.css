@@ -1,0 +1,96 @@
+/* Design tokens (--rg-*) are provided by reglass-material/tokens.css,
+   imported before this file in +layout.svelte. */
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-Variable.ttf') format('truetype');
+  font-weight: 200 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  scrollbar-width: none;
+  margin: 0;
+  padding: 0;
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 800;
+  background-color: var(--rg-surface);
+  color: var(--rg-on-surface);
+  /* user-select: none only on interactive elements, not globally */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /*
+   * Subtle noise-like texture using a repeating CSS pattern (not a gradient).
+   * A 6x6 px SVG tile with semi-random dark+light dots creates a micro-texture
+   * that feels like frosted glass paper. The opacity is theme-aware so it stays
+   * visible but never overpowering in either light or dark mode.
+   */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Cpath d='M1,1h.8v.8h-.8zM4,2h.8v.8h-.8zM0,4h.8v.8h-.8zM3,5h.8v.8h-.8zM5,0h.8v.8h-.8z' fill='%231A1C1E' opacity='.028'/%3E%3Cpath d='M2,3h.8v.8h-.8zM5,4h.8v.8h-.8z' fill='%23FFFFFF' opacity='.015'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 6px 6px;
+}
+
+* {
+  -webkit-text-size-adjust: 100%;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===== Tap interaction feedback ===== */
+
+.tap-btn {
+  transition: transform 0.2s var(--rg-spring-easing);
+}
+.tap-btn:active {
+  transform: scale(0.94);
+  transition: transform 0.1s ease-out;
+}
+
+.tap-dim {
+  transition: filter 0.15s ease;
+}
+.tap-dim:active {
+  filter: brightness(0.88);
+  transition: filter 0.08s ease-out;
+}
+
+/* Scope hover effects to pointer devices to prevent sticky hover on touch */
+@media (hover: none) {
+  .tap-btn:hover, .tap-dim:hover {
+    all: unset;
+  }
+}
+
+.glass-blur {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Prevent text selection on interactive elements */
+button, .tab, .tap-btn, .tap-dim, .top-bar, .tabs-container {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
