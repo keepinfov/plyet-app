@@ -317,16 +317,18 @@
           </div>
 
           <div class="setting-group">
-            <ListRow title="Тема" onclick={() => { hapticLight(); store.toggleTheme(); }}>
+            <ListRow title="Тема" description="Светлая · Тёмная · Системная" onclick={() => { hapticLight(); store.cycleTheme(); }}>
               {#snippet leading()}
-                {#if store.theme === 'light'}
+                {#if store.themePref === 'system'}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
+                {:else if store.themePref === 'light'}
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z"/></svg>
                 {:else}
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
                 {/if}
               {/snippet}
               {#snippet trailing()}
-                <TogglePill active={store.theme === 'dark'} label={store.theme === 'light' ? 'Светлая' : 'Тёмная'} />
+                <TogglePill active={store.themePref !== 'light'} label={store.themePref === 'system' ? 'Системная' : store.themePref === 'light' ? 'Светлая' : 'Тёмная'} />
               {/snippet}
             </ListRow>
 

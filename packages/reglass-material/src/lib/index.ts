@@ -15,6 +15,6 @@ export { default as ConfirmDialog } from './components/ConfirmDialog.svelte';
 export { default as ColorPicker } from './components/ColorPicker.svelte';
 export { default as IconPicker } from './components/IconPicker.svelte';
 
-export { theme, themeInitScript, type ThemeMode, type ThemeConfig } from './theme/index.js';
+export { theme, themeInitScript, type ThemeMode, type ThemePref, type ThemeConfig } from './theme/index.js';
 export { keyboard } from './keyboard.svelte.js';
 export { keyboardAvoid } from './actions/keyboardAvoid.js';

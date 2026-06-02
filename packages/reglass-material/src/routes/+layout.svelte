@@ -12,7 +12,7 @@
 <div class="pg-shell">
   <header class="pg-controls">
     <strong>re:glass material</strong>
-    <button onclick={() => theme.toggleMode()}>mode: {theme.mode}</button>
+    <button onclick={() => theme.cyclePref()}>pref: {theme.pref} ({theme.mode})</button>
     <button onclick={() => theme.toggleBlur()}>blur: {theme.blurEnabled ? 'on' : 'off'}</button>
     <button onclick={() => theme.toggleTransparency()}>
       transparency: {theme.transparencyEnabled ? 'on' : 'off'}
