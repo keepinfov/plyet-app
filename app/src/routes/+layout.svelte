@@ -12,6 +12,16 @@
 
   let { children } = $props();
 
+  // Keep the Android transient status bar's icon tint in sync with the theme so
+  // it stays legible when revealed by a swipe. No-op off Android (the native
+  // PlyetNative bridge is only injected by MainActivity).
+  $effect(() => {
+    const dark = theme.mode === 'dark';
+    const bridge = (window as unknown as { PlyetNative?: { setStatusBarDark?: (d: boolean) => void } })
+      .PlyetNative;
+    bridge?.setStatusBarDark?.(dark);
+  });
+
   onMount(() => {
     const onWheel = (e: WheelEvent) => { if (e.ctrlKey) e.preventDefault(); };
     const onKeydown = (e: KeyboardEvent) => {
