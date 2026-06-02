@@ -15,6 +15,7 @@
   import Snackbar from '$lib/components/Snackbar.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import LogsPanel from '$lib/components/LogsPanel.svelte';
+  import DebugPanel from '$lib/components/DebugPanel.svelte';
   import { store } from '$lib/stores/budget.svelte';
   import type { Item } from '$lib/types';
 
@@ -44,6 +45,7 @@
     if (showAdd) { showAdd = false; editData = null; return; }
     if (store.showSettingsModal) { store.showSettingsModal = false; return; }
     if (store.showBudgetModal) { store.showBudgetModal = false; return; }
+    if (store.showDebug) { store.showDebug = false; return; }
     if (store.showLogs) { store.showLogs = false; return; }
     if (store.currentScreen !== 'feed') { store.currentScreen = 'feed'; return; }
     if (backTimer) {
@@ -161,6 +163,7 @@
     <Snackbar />
     <ConfirmDialog />
     <LogsPanel />
+    <DebugPanel />
   {/if}
 </div>
 

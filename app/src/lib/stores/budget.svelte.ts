@@ -27,6 +27,7 @@ class BudgetStore {
 
   logs = $state<LogEntry[]>([]);
   showLogs = $state(false);
+  showDebug = $state(false);
   showBudgetModal = $state(false);
   showSettingsModal = $state(false);
   showRecurringModal = $state(false);
