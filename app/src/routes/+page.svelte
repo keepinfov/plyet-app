@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { listen } from '@tauri-apps/api/event';
+  import { onBackButtonPress } from '@tauri-apps/api/app';
   import { invoke } from '@tauri-apps/api/core';
   import TopBar from '$lib/components/TopBar.svelte';
   import ChartSection from '$lib/components/ChartSection.svelte';
@@ -29,7 +29,7 @@
   let editData = $state<Item | null>(null);
   let showChooser = $state(false);
   let backTimer: ReturnType<typeof setTimeout> | null = null;
-  let unlistenBack: (() => void) | undefined;
+  let backListener: Awaited<ReturnType<typeof onBackButtonPress>> | undefined;
 
   const screens = [
     { key: 'feed' as const, label: 'Лента' },
@@ -62,11 +62,11 @@
 
   onMount(async () => {
     store.load();
-    unlistenBack = await listen('back-pressed', handleBack);
+    backListener = await onBackButtonPress(() => handleBack());
   });
 
   onDestroy(() => {
-    unlistenBack?.();
+    backListener?.unregister();
     if (backTimer) clearTimeout(backTimer);
   });
 

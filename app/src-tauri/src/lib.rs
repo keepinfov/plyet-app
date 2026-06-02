@@ -5,8 +5,6 @@ mod validate;
 use data::*;
 use db::Database;
 use tauri::{Manager, State};
-#[cfg(mobile)]
-use tauri::{Emitter, RunEvent};
 use validate::*;
 
 #[tauri::command]
@@ -425,15 +423,5 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_app_handle, event| {
-            #[cfg(mobile)]
-            if let RunEvent::ExitRequested { api, .. } = event {
-                api.prevent_exit();
-                let _ = _app_handle.emit("back-pressed", ());
-            }
-
-            // On desktop, allow normal window close behavior
-            #[cfg(not(mobile))]
-            let _ = event;
-        });
+        .run(|_, _| {});
 }

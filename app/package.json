@@ -1,6 +1,6 @@
 {
   "name": "Plyet",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Plyet - a local-first personal budget app (Tauri + SvelteKit)",
   "type": "module",
   "scripts": {
