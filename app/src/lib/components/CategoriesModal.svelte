@@ -4,6 +4,7 @@
   import { store } from '$lib/stores/budget.svelte';
   import { categoryIcon, CATEGORY_ICON_KEYS } from '$lib/icons';
   import { hapticLight } from '$lib/haptics';
+  import { keyboardAvoid } from 'reglass-material';
 
   interface Props {
     show?: boolean;
@@ -186,39 +187,6 @@
     });
   }
 
-  function handleSheetFocusIn(e: FocusEvent) {
-    const target = e.target as HTMLElement;
-    if (!(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
-    const overlay = target.closest('.overlay') as HTMLElement | null;
-    if (!overlay) return;
-
-    const vv = window.visualViewport;
-    if (!vv) {
-      setTimeout(() => target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 400);
-      return;
-    }
-
-    const onResize = () => {
-      overlay.style.height = `${vv.height}px`;
-      overlay.style.top = `${vv.offsetTop}px`;
-      overlay.style.bottom = 'auto';
-      requestAnimationFrame(() => target.scrollIntoView({ block: 'center', behavior: 'smooth' }));
-    };
-
-    vv.addEventListener('resize', onResize);
-    vv.addEventListener('scroll', onResize);
-
-    const onBlur = () => {
-      target.removeEventListener('blur', onBlur);
-      vv.removeEventListener('resize', onResize);
-      vv.removeEventListener('scroll', onResize);
-      overlay.style.height = '';
-      overlay.style.top = '';
-      overlay.style.bottom = '';
-    };
-    target.addEventListener('blur', onBlur);
-  }
-
   function onOverlayClick(e: MouseEvent) {
     if (e.target === e.currentTarget) {
       if (editing) editing = null;
@@ -237,8 +205,8 @@
 />
 
 {#if show}
-  <div class="overlay" transition:fade={{ duration: 180 }} onclick={onOverlayClick} onkeydown={(e) => { if (e.key === 'Escape') close(); }} role="dialog" aria-modal="true" tabindex="-1">
-    <div class="sheet" transition:fly={{ y: -60, duration: 250, easing: cubicOut }} onfocusin={handleSheetFocusIn}>
+  <div class="overlay" transition:fade={{ duration: 180 }} onclick={onOverlayClick} onkeydown={(e) => { if (e.key === 'Escape') close(); }} use:keyboardAvoid role="dialog" aria-modal="true" tabindex="-1">
+    <div class="sheet" transition:fly={{ y: -60, duration: 250, easing: cubicOut }}>
 
       {#if editing}
         <div class="modal-title">{editing === 'new' ? 'Новая категория' : 'Редактировать'}</div>
@@ -393,7 +361,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+    padding: env(safe-area-inset-top, 0px) 0
+      calc(env(safe-area-inset-bottom, 0px) + var(--rg-keyboard-height, 0px));
   }
 
   .sheet {
@@ -406,6 +375,7 @@
     border-radius: 1.25rem;
     padding: 1.5rem;
     overflow-y: auto;
+    overscroll-behavior: contain;
     box-shadow: 0 8px 40px rgba(0,0,0,0.15);
     contain: layout style paint;
     will-change: transform;
@@ -534,6 +504,7 @@
     font-size: 1rem;
     font-family: inherit;
     outline: none;
+    scroll-margin-bottom: 6rem;
     transition: box-shadow 0.2s ease, background 0.2s ease;
   }
 

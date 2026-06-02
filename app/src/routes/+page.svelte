@@ -113,7 +113,7 @@
     </div>
   {:else}
     <TopBar />
-    <div class="scroll-area" style="overflow-y: {showAdd || store.showBudgetModal ? 'hidden' : 'auto'}">
+    <div class="scroll-area">
       {#if store.currentScreen === 'regular'}
         <RegularScreen />
       {:else}
@@ -219,6 +219,14 @@
     z-index: 200;
     border-radius: 0.75rem;
     box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.22);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  /* Keep the floating tab bar out of the way while the keyboard is up. */
+  :global([data-keyboard-open]) .screen-switch {
+    opacity: 0;
+    transform: translateY(140%) translateZ(0);
+    pointer-events: none;
   }
 
   .scroll-area {
