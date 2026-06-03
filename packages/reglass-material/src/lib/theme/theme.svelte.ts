@@ -3,12 +3,15 @@
 // <html>: data-theme, data-accent, data-blur, data-transparency. State is
 // persisted to localStorage under a configurable prefix and is SSR-safe.
 
+/** The resolved appearance actually applied to <html data-theme>. */
 export type ThemeMode = 'light' | 'dark';
+/** The user's stored preference: a fixed mode, or follow the OS setting. */
+export type ThemePref = ThemeMode | 'system';
 
 export interface ThemeConfig {
   /** localStorage key prefix, e.g. 'plyet' → keys 'plyet-theme', 'plyet-accent', … */
   storagePrefix?: string;
-  defaultMode?: ThemeMode;
+  defaultPref?: ThemePref;
   defaultAccent?: string;
   defaultBlur?: boolean;
   defaultTransparency?: boolean;
@@ -17,13 +20,22 @@ export interface ThemeConfig {
 const hasWindow = () => typeof window !== 'undefined';
 const hasDocument = () => typeof document !== 'undefined';
 
+const DARK_QUERY = '(prefers-color-scheme: dark)';
+
 class ThemeController {
+  /** User preference: 'light' | 'dark' | 'system'. */
+  pref = $state<ThemePref>('system');
+  /** Resolved appearance applied to the DOM ('system' collapses to one of these). */
   mode = $state<ThemeMode>('light');
   accent = $state<string>('blue');
   blurEnabled = $state<boolean>(true);
   transparencyEnabled = $state<boolean>(true);
 
   #prefix = 'rg';
+  #mql: MediaQueryList | null = null;
+  #onSystemChange = () => {
+    if (this.pref === 'system') this.#resolveAndApply();
+  };
 
   #key(name: string): string {
     return `${this.#prefix}-${name}`;
@@ -54,7 +66,7 @@ class ThemeController {
   configure(config: ThemeConfig = {}): void {
     this.#prefix = config.storagePrefix ?? this.#prefix;
 
-    this.mode = (this.#read('theme') as ThemeMode) || config.defaultMode || 'light';
+    this.pref = (this.#read('theme') as ThemePref) || config.defaultPref || 'system';
     this.accent = this.#read('accent') || config.defaultAccent || 'blue';
 
     const blur = this.#read('blur');
@@ -64,7 +76,32 @@ class ThemeController {
     this.transparencyEnabled =
       transparency !== null ? transparency !== 'off' : config.defaultTransparency ?? true;
 
+    this.#watchSystem();
+    this.#resolveMode();
     this.applyAll();
+  }
+
+  /** OS-reported appearance, falling back to 'light' when unknown (SSR). */
+  #systemMode(): ThemeMode {
+    if (hasWindow() && window.matchMedia) {
+      return window.matchMedia(DARK_QUERY).matches ? 'dark' : 'light';
+    }
+    return 'light';
+  }
+
+  #watchSystem(): void {
+    if (this.#mql || !hasWindow() || !window.matchMedia) return;
+    this.#mql = window.matchMedia(DARK_QUERY);
+    this.#mql.addEventListener('change', this.#onSystemChange);
+  }
+
+  #resolveMode(): void {
+    this.mode = this.pref === 'system' ? this.#systemMode() : this.pref;
+  }
+
+  #resolveAndApply(): void {
+    this.#resolveMode();
+    if (hasDocument()) document.documentElement.setAttribute('data-theme', this.mode);
   }
 
   /** Apply all four attributes to <html> at once. */
@@ -77,14 +114,18 @@ class ThemeController {
     el.setAttribute('data-transparency', this.transparencyEnabled ? 'on' : 'off');
   }
 
-  setMode(mode: ThemeMode): void {
-    this.mode = mode;
-    this.#write('theme', mode);
-    if (hasDocument()) document.documentElement.setAttribute('data-theme', mode);
+  setPref(pref: ThemePref): void {
+    this.pref = pref;
+    this.#write('theme', pref);
+    this.#watchSystem();
+    this.#resolveAndApply();
   }
 
-  toggleMode(): void {
-    this.setMode(this.mode === 'light' ? 'dark' : 'light');
+  /** Cycle Light → Dark → System → Light, for a single-tap theme control. */
+  cyclePref(): void {
+    const order: ThemePref[] = ['light', 'dark', 'system'];
+    const next = order[(order.indexOf(this.pref) + 1) % order.length];
+    this.setPref(next);
   }
 
   setAccent(accent: string): void {

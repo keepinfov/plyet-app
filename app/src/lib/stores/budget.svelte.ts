@@ -27,6 +27,7 @@ class BudgetStore {
 
   logs = $state<LogEntry[]>([]);
   showLogs = $state(false);
+  showDebug = $state(false);
   showBudgetModal = $state(false);
   showSettingsModal = $state(false);
   showRecurringModal = $state(false);
@@ -43,11 +44,12 @@ class BudgetStore {
   // Theme state is owned by the reglass-material theme controller; these
   // delegate so existing call-sites keep working unchanged.
   get theme(): 'light' | 'dark' { return theme.mode; }
+  get themePref(): 'light' | 'dark' | 'system' { return theme.pref; }
   get accentColor(): string { return theme.accent; }
   get blurEnabled(): boolean { return theme.blurEnabled; }
   get transparencyEnabled(): boolean { return theme.transparencyEnabled; }
 
-  toggleTheme() { theme.toggleMode(); }
+  cycleTheme() { theme.cyclePref(); }
   setAccentColor(color: string) { theme.setAccent(color); }
   toggleBlur() { theme.toggleBlur(); }
   toggleTransparency() { theme.toggleTransparency(); }

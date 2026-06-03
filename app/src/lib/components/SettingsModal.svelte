@@ -209,6 +209,12 @@
     }
   }
 
+  function handleOpenDebug() {
+    hapticLight();
+    close();
+    store.showDebug = true;
+  }
+
   async function handleExportLogs() {
     hapticLight();
     const text = store.logs.map(l => `[${l.ts}] [${l.level.toUpperCase()}] ${l.msg}`).join('\n');
@@ -311,16 +317,18 @@
           </div>
 
           <div class="setting-group">
-            <ListRow title="Тема" onclick={() => { hapticLight(); store.toggleTheme(); }}>
+            <ListRow title="Тема" description="Светлая · Тёмная · Системная" onclick={() => { hapticLight(); store.cycleTheme(); }}>
               {#snippet leading()}
-                {#if store.theme === 'light'}
+                {#if store.themePref === 'system'}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
+                {:else if store.themePref === 'light'}
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z"/></svg>
                 {:else}
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
                 {/if}
               {/snippet}
               {#snippet trailing()}
-                <TogglePill active={store.theme === 'dark'} label={store.theme === 'light' ? 'Светлая' : 'Тёмная'} />
+                <TogglePill active={store.themePref !== 'light'} label={store.themePref === 'system' ? 'Системная' : store.themePref === 'light' ? 'Светлая' : 'Тёмная'} />
               {/snippet}
             </ListRow>
 
@@ -413,6 +421,11 @@
             <ListRow title="Экспорт логов" description={`${store.logs.length} записей`} onclick={handleExportLogs}>
               {#snippet leading()}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12zM6 7h12v2H6V7zm0 4h9v2H6v-2z"/></svg>
+              {/snippet}
+            </ListRow>
+            <ListRow title="Диагностика" description="Клавиатура, WebView, viewport" onclick={handleOpenDebug}>
+              {#snippet leading()}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C12.96 5.06 12.49 5 12 5c-.49 0-.96.06-1.41.17L8.41 3 7 4.41l1.62 1.63C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
               {/snippet}
             </ListRow>
           </div>

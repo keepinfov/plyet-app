@@ -38,7 +38,7 @@
 <style>
   .top-bar {
     position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+    top: calc(var(--rg-safe-top) + 0.5rem);
     left: 50%;
     transform: translateX(-50%);
     width: calc(100% - 2.5rem);

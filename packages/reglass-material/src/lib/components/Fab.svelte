@@ -16,7 +16,7 @@
 <style>
   .rg-fab {
     position: fixed;
-    bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(2rem + var(--rg-safe-bottom));
     right: calc(2rem + env(safe-area-inset-right, 0px));
     width: 4rem;
     height: 4rem;
@@ -43,5 +43,13 @@
   .rg-fab:active {
     transform: scale(0.92);
     transition: transform 0.1s ease-out;
+  }
+
+  /* When the soft keyboard is up, drop the FAB out of the way so it can't
+     cover a focused input. translateZ(0) keeps it stable on iOS WKWebView. */
+  :global([data-keyboard-open]) .rg-fab {
+    opacity: 0;
+    transform: translateY(140%) translateZ(0);
+    pointer-events: none;
   }
 </style>
