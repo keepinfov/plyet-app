@@ -1,6 +1,6 @@
 [package]
 name = "plyet"
-version = "0.1.0"
+version = "0.1.1"
 description = "Plyet - a local-first personal budget app"
 authors = ["keepinfov"]
 edition = "2021"

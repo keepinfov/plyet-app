@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { listen } from '@tauri-apps/api/event';
+  import { onBackButtonPress } from '@tauri-apps/api/app';
   import { invoke } from '@tauri-apps/api/core';
   import TopBar from '$lib/components/TopBar.svelte';
   import ChartSection from '$lib/components/ChartSection.svelte';
@@ -15,6 +15,7 @@
   import Snackbar from '$lib/components/Snackbar.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import LogsPanel from '$lib/components/LogsPanel.svelte';
+  import DebugPanel from '$lib/components/DebugPanel.svelte';
   import { store } from '$lib/stores/budget.svelte';
   import type { Item } from '$lib/types';
 
@@ -29,7 +30,7 @@
   let editData = $state<Item | null>(null);
   let showChooser = $state(false);
   let backTimer: ReturnType<typeof setTimeout> | null = null;
-  let unlistenBack: (() => void) | undefined;
+  let backListener: Awaited<ReturnType<typeof onBackButtonPress>> | undefined;
 
   const screens = [
     { key: 'feed' as const, label: 'Лента' },
@@ -44,6 +45,7 @@
     if (showAdd) { showAdd = false; editData = null; return; }
     if (store.showSettingsModal) { store.showSettingsModal = false; return; }
     if (store.showBudgetModal) { store.showBudgetModal = false; return; }
+    if (store.showDebug) { store.showDebug = false; return; }
     if (store.showLogs) { store.showLogs = false; return; }
     if (store.currentScreen !== 'feed') { store.currentScreen = 'feed'; return; }
     if (backTimer) {
@@ -62,11 +64,11 @@
 
   onMount(async () => {
     store.load();
-    unlistenBack = await listen('back-pressed', handleBack);
+    backListener = await onBackButtonPress(() => handleBack());
   });
 
   onDestroy(() => {
-    unlistenBack?.();
+    backListener?.unregister();
     if (backTimer) clearTimeout(backTimer);
   });
 
@@ -113,7 +115,7 @@
     </div>
   {:else}
     <TopBar />
-    <div class="scroll-area" style="overflow-y: {showAdd || store.showBudgetModal ? 'hidden' : 'auto'}">
+    <div class="scroll-area">
       {#if store.currentScreen === 'regular'}
         <RegularScreen />
       {:else}
@@ -161,6 +163,7 @@
     <Snackbar />
     <ConfirmDialog />
     <LogsPanel />
+    <DebugPanel />
   {/if}
 </div>
 
@@ -214,11 +217,19 @@
     position: fixed;
     left: 1rem;
     right: calc(5.75rem + env(safe-area-inset-right, 0px));
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 2.625rem);
+    bottom: calc(var(--rg-safe-bottom) + 1rem);
     display: flex;
     z-index: 200;
     border-radius: 0.75rem;
     box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.22);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  /* Keep the floating tab bar out of the way while the keyboard is up. */
+  :global([data-keyboard-open]) .screen-switch {
+    opacity: 0;
+    transform: translateY(140%) translateZ(0);
+    pointer-events: none;
   }
 
   .scroll-area {
@@ -227,8 +238,8 @@
     overflow-x: hidden;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 4.25rem);
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem);
+    padding-top: calc(var(--rg-safe-top) + 4.25rem);
+    padding-bottom: calc(var(--rg-safe-bottom) + 6rem);
   }
 
   .chooser-title {
@@ -296,7 +307,7 @@
     :global(.rg-fab.fab-bar) {
       height: 2.75rem;
       width: 4rem;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 2.625rem);
+      bottom: calc(var(--rg-safe-bottom) + 1rem);
       right: calc(1rem + env(safe-area-inset-right, 0px));
       border-radius: 0.75rem;
     }

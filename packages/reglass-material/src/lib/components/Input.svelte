@@ -33,6 +33,7 @@
     outline: none;
     border: none;
     min-width: 0;
+    scroll-margin-bottom: 6rem;
   }
 
   .rg-input[data-variant='filled'] {

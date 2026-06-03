@@ -8,7 +8,8 @@
 export function themeInitScript(prefix = 'rg'): string {
   return (
     `try{var p=${JSON.stringify(prefix)},d=document.documentElement,g=function(k){return localStorage.getItem(p+'-'+k)};` +
-    `d.setAttribute('data-theme',g('theme')||'light');` +
+    `var t=g('theme')||'system';if(t==='system'){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}` +
+    `d.setAttribute('data-theme',t);` +
     `d.setAttribute('data-accent',g('accent')||'blue');` +
     `d.setAttribute('data-blur',g('blur')==='off'?'off':'on');` +
     `d.setAttribute('data-transparency',g('transparency')==='off'?'off':'on');` +
