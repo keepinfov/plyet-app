@@ -2,7 +2,7 @@
   import { fly, fade } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import { store } from '$lib/stores/budget.svelte';
-  import { keyboard } from 'reglass-material';
+  import { keyboard, insets } from 'reglass-material';
 
   // Tick to refresh non-reactive readings (visualViewport, computed styles).
   // Driven by visualViewport events + a slow interval while the panel is open.
@@ -85,6 +85,12 @@
       },
       { label: 'safe-area top', value: safeArea('top') },
       { label: 'safe-area bottom', value: safeArea('bottom') },
+      { label: 'insets.top', value: String(Math.round(insets.top)) },
+      { label: 'insets.bottom', value: String(Math.round(insets.bottom)) },
+      { label: '--rg-inset-top', value: cssVar('--rg-inset-top') },
+      { label: '--rg-inset-bottom', value: cssVar('--rg-inset-bottom') },
+      { label: '--rg-safe-top', value: cssVar('--rg-safe-top') },
+      { label: '--rg-safe-bottom', value: cssVar('--rg-safe-bottom') },
     ];
   });
 

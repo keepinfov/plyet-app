@@ -2,7 +2,7 @@
   import 'reglass-material/tokens.css';
   import '../app.css';
   import { theme } from 'reglass-material/theme';
-  import { keyboard } from 'reglass-material';
+  import { keyboard, insets } from 'reglass-material';
   import { onMount } from 'svelte';
 
   // Hydrate + apply all four theming attributes from the persisted 'plyet-*'
@@ -30,6 +30,7 @@
     const onGesture = (e: Event) => e.preventDefault();
 
     const teardownKeyboard = keyboard.init();
+    const teardownInsets = insets.init();
 
     window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('keydown', onKeydown);
@@ -39,6 +40,7 @@
 
     return () => {
       teardownKeyboard();
+      teardownInsets();
       window.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKeydown);
       window.removeEventListener('gesturestart', onGesture);

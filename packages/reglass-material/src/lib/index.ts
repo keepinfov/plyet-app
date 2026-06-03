@@ -17,4 +17,5 @@ export { default as IconPicker } from './components/IconPicker.svelte';
 
 export { theme, themeInitScript, type ThemeMode, type ThemePref, type ThemeConfig } from './theme/index.js';
 export { keyboard } from './keyboard.svelte.js';
+export { insets } from './insets.svelte.js';
 export { keyboardAvoid } from './actions/keyboardAvoid.js';

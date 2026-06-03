@@ -16,7 +16,7 @@
 <style>
   .rg-fab {
     position: fixed;
-    bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(2rem + var(--rg-safe-bottom));
     right: calc(2rem + env(safe-area-inset-right, 0px));
     width: 4rem;
     height: 4rem;

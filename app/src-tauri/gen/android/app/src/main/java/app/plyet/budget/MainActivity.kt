@@ -11,6 +11,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
 class MainActivity : TauriActivity() {
+  private var webViewRef: WebView? = null
+
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
@@ -49,9 +51,21 @@ class MainActivity : TauriActivity() {
   private inner class ThemeBridge {
     @JavascriptInterface
     fun setStatusBarDark(isDark: Boolean) = this@MainActivity.setStatusBarDark(isDark)
+
+    // JS → native: force a fresh inset dispatch. The OnApplyWindowInsetsListener
+    // fires once during initial layout — before the web page has registered
+    // window.__plyetSetInsets — so that first emission is lost and insets only
+    // appear after the next window change. The web inset controller calls this
+    // on init (bridge now ready) to pull the current values immediately.
+    @JavascriptInterface
+    fun requestInsets() {
+      val wv = webViewRef ?: return
+      wv.post { ViewCompat.requestApplyInsets(wv) }
+    }
   }
 
   override fun onWebViewCreate(webView: WebView) {
+    webViewRef = webView
     webView.settings.setSupportZoom(false)
     webView.settings.builtInZoomControls = false
     webView.settings.displayZoomControls = false
@@ -74,6 +88,24 @@ class MainActivity : TauriActivity() {
       val dp = px / webView.resources.displayMetrics.density
       webView.evaluateJavascript(
         "window.__plyetSetKeyboardInset && window.__plyetSetKeyboardInset($dp)",
+        null
+      )
+
+      // System-bar insets the WebView's env(safe-area-inset-*) can't see under
+      // edge-to-edge: status bar is hidden (env reports cutout only) and the nav
+      // bar height isn't reflected. Push framework-measured values so layout can
+      // reserve real space. Top uses IgnoringVisibility so the reserve stays
+      // stable while the transient status bar swipes in/out.
+      val density = webView.resources.displayMetrics.density
+      val statusTop = maxOf(
+        insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.statusBars()).top,
+        insets.getInsets(WindowInsetsCompat.Type.displayCutout()).top
+      )
+      val navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+      val topDp = statusTop / density
+      val bottomDp = navBottom / density
+      webView.evaluateJavascript(
+        "window.__plyetSetInsets && window.__plyetSetInsets($topDp,$bottomDp)",
         null
       )
       insets // observe only, don't consume

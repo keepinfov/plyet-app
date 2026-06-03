@@ -217,7 +217,7 @@
     position: fixed;
     left: 1rem;
     right: calc(5.75rem + env(safe-area-inset-right, 0px));
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 2.625rem);
+    bottom: calc(var(--rg-safe-bottom) + 1rem);
     display: flex;
     z-index: 200;
     border-radius: 0.75rem;
@@ -238,8 +238,8 @@
     overflow-x: hidden;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 4.25rem);
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem);
+    padding-top: calc(var(--rg-safe-top) + 4.25rem);
+    padding-bottom: calc(var(--rg-safe-bottom) + 6rem);
   }
 
   .chooser-title {
@@ -307,7 +307,7 @@
     :global(.rg-fab.fab-bar) {
       height: 2.75rem;
       width: 4rem;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 2.625rem);
+      bottom: calc(var(--rg-safe-bottom) + 1rem);
       right: calc(1rem + env(safe-area-inset-right, 0px));
       border-radius: 0.75rem;
     }

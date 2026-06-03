@@ -4,6 +4,13 @@
    data-blur (on|off), data-transparency (on|off). */
 
 :root {
+  /* System-bar safe insets. Compose the browser safe-area with the native-fed
+     Android values (--rg-inset-*, set by the insets controller); the larger wins
+     so we reserve real space under cutouts / hidden status bar / nav bar, while
+     iOS & desktop fall back to env() automatically. */
+  --rg-safe-top: max(env(safe-area-inset-top, 0px), var(--rg-inset-top, 0px));
+  --rg-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--rg-inset-bottom, 0px));
+
   /* Light theme (default) */
   --rg-surface: #F0F2F5;
   --rg-on-surface: #1A1C1E;
