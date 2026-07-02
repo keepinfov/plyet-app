@@ -5,9 +5,14 @@ on:
     branches: [master]
   pull_request:
 
+# Two independent jobs so the PR shows a separate pass/fail for the frontend
+# and the Rust backend. Within the backend job every check runs (if: always())
+# even when an earlier one fails, so a single run tells you exactly what's
+# green and what's red instead of stopping at the first failure.
+
 jobs:
-  check:
-    name: Typecheck, lint, test
+  frontend:
+    name: Frontend (svelte-check)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,14 +24,35 @@ jobs:
       - name: Cache the Nix store
         uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: Install deps, typecheck frontend, check + test Rust backend
-        run: |
-          nix develop --command bash -c '
-            set -euo pipefail
-            pnpm install --frozen-lockfile
-            pnpm check
-            cd app/src-tauri
-            cargo fmt --check
-            cargo check
-            cargo test
-          '
+      - name: Install dependencies
+        run: nix develop --command pnpm install --frozen-lockfile
+
+      - name: Typecheck (pnpm check)
+        run: nix develop --command pnpm check
+
+  rust:
+    name: Rust backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/src-tauri
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Cache the Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Format (cargo fmt --check)
+        run: nix develop ../.. --command cargo fmt --check
+
+      - name: Compile (cargo check)
+        if: ${{ !cancelled() }}
+        run: nix develop ../.. --command cargo check
+
+      - name: Tests (cargo test)
+        if: ${{ !cancelled() }}
+        run: nix develop ../.. --command cargo test
