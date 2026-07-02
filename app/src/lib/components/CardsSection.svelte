@@ -40,7 +40,7 @@
   }
 
   // Distinguish a truly empty budget from one where filters/search hid everything.
-  const budgetHasItems = $derived((store.currentBudget?.items.length ?? 0) > 0);
+  const budgetHasItems = $derived(store.scopeItems.length > 0);
 </script>
 
 <div class="cards-section">

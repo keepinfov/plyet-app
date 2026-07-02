@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { theme } from 'reglass-material/theme';
 import type { AppData, Budget, Item, Category, Recurring, Product, ItemSource, MaterializeResult, ProductResult, UnmaterializeResult } from '$lib/types';
 import { nextOccurrences, productOccurrences } from '$lib/finance';
+import { currentPeriod, periodOf, periodLabel } from '$lib/dates';
 
 type LogLevel = 'ok' | 'err' | 'warn' | 'info';
 
@@ -11,10 +12,22 @@ interface LogEntry {
   msg: string;
 }
 
+/**
+ * View scope within the current root budget:
+ * - 'all'          — «Весь бюджет», aggregates every sub-budget
+ * - 'YYYY-MM'      — one month sub-budget (plus reflected custom items)
+ * - 'custom:<id>'  — one custom sub-budget
+ */
+type Scope = string;
+
+const LAST_ROOT_KEY = 'plyet:lastRootId';
+const LAST_SCOPE_KEY = 'plyet:lastScope';
+
 class BudgetStore {
   data = $state<AppData | null>(null);
   loading = $state(true);
-  currentBudgetId = $state<number>(1);
+  currentRootId = $state<number>(1);
+  currentScope = $state<Scope>(currentPeriod());
   currentScreen = $state<'feed' | 'regular'>('feed');
   currentTab = $state<'expenses' | 'income' | 'all'>('expenses');
   currentSort = $state<'date-desc' | 'date-asc' | 'price-desc' | 'price-asc' | 'name-asc' | 'name-desc'>('date-desc');
@@ -54,18 +67,102 @@ class BudgetStore {
   toggleBlur() { theme.toggleBlur(); }
   toggleTransparency() { theme.toggleTransparency(); }
 
-  currentBudget = $derived(
-    this.data?.budgets.find(b => b.id === this.currentBudgetId) ?? null
+  // ── Hierarchy selectors ─────────────────────────────────────
+
+  roots = $derived(this.data?.budgets.filter(b => b.parent_id == null) ?? []);
+
+  currentRoot = $derived(this.roots.find(b => b.id === this.currentRootId) ?? null);
+
+  /** All sub-budgets of the current root. */
+  childrenOfRoot = $derived(
+    this.data?.budgets.filter(b => b.parent_id === this.currentRootId) ?? []
   );
 
-  /** Recurring rules belonging to the current budget. */
+  /** Month sub-budgets of the current root, newest first. */
+  monthBudgets = $derived(
+    this.childrenOfRoot
+      .filter(b => b.kind === 'month' && b.period)
+      .sort((a, b) => (b.period ?? '').localeCompare(a.period ?? ''))
+  );
+
+  customBudgets = $derived(this.childrenOfRoot.filter(b => b.kind === 'custom'));
+
+  scopeType = $derived<'all' | 'month' | 'custom'>(
+    this.currentScope === 'all' ? 'all'
+      : this.currentScope.startsWith('custom:') ? 'custom'
+      : 'month'
+  );
+
+  scopePeriod = $derived(this.scopeType === 'month' ? this.currentScope : null);
+
+  scopeCustomId = $derived(
+    this.scopeType === 'custom' ? Number(this.currentScope.slice('custom:'.length)) : null
+  );
+
+  currentMonthBudget = $derived(
+    this.monthBudgets.find(b => b.period === this.scopePeriod) ?? null
+  );
+
+  currentCustomBudget = $derived(
+    this.customBudgets.find(b => b.id === this.scopeCustomId) ?? null
+  );
+
+  /** The budget the scope maps to (root for 'all'; may be null for a month with no row yet). */
+  currentBudget = $derived<Budget | null>(
+    this.scopeType === 'all' ? this.currentRoot
+      : this.scopeType === 'custom' ? this.currentCustomBudget
+      : this.currentMonthBudget
+  );
+
+  /**
+   * Real (persisted) items in the current scope. Month scope additionally
+   * pulls in items of custom sub-budgets with `reflect_in_months`, tagged
+   * with `reflectedFrom` so cards can show the source badge.
+   */
+  scopeItems = $derived.by<Item[]>(() => {
+    const root = this.currentRoot;
+    if (!root) return [];
+    if (this.scopeType === 'custom') {
+      return this.currentCustomBudget?.items ?? [];
+    }
+    if (this.scopeType === 'month') {
+      const period = this.scopePeriod!;
+      const out: Item[] = [...(this.currentMonthBudget?.items ?? [])];
+      for (const custom of this.customBudgets) {
+        if (!custom.reflect_in_months) continue;
+        for (const item of custom.items) {
+          if (periodOf(item.date) === period) out.push({ ...item, reflectedFrom: custom.name });
+        }
+      }
+      return out;
+    }
+    // 'all': the whole tree of the current root
+    return [...root.items, ...this.childrenOfRoot.flatMap(b => b.items)];
+  });
+
+  /** Scope limit before income: month inherits the root default until its row exists. */
+  scopeLimit = $derived.by(() => {
+    if (this.scopeType === 'custom') return this.currentCustomBudget?.limit ?? 0;
+    if (this.scopeType === 'month') return this.currentMonthBudget?.limit ?? this.currentRoot?.limit ?? 0;
+    return this.currentRoot?.limit ?? 0;
+  });
+
+  /** Limit topped up by completed income in scope (the number the TopBar shows). */
+  effectiveLimit = $derived(
+    this.scopeLimit
+    + this.scopeItems
+      .filter(i => i.item_type === 'income' && i.completed)
+      .reduce((s, i) => s + i.amount, 0)
+  );
+
+  /** Recurring rules belonging to the current root budget. */
   recurringForBudget = $derived(
-    this.data?.recurring.filter(r => r.budget_id === this.currentBudgetId) ?? []
+    this.data?.recurring.filter(r => r.budget_id === this.currentRootId) ?? []
   );
 
-  /** Products (deposits/loans) belonging to the current budget. */
+  /** Products (deposits/loans) belonging to the current root budget. */
   productsForBudget = $derived(
-    this.data?.products.filter(p => p.budget_id === this.currentBudgetId) ?? []
+    this.data?.products.filter(p => p.budget_id === this.currentRootId) ?? []
   );
 
   /** Virtual feed items projected from active products up to each product's horizon. */
@@ -100,22 +197,33 @@ class BudgetStore {
           completed: false,
           virtual: true,
           source,
+          uuid: '',
+          created_at: '',
+          updated_at: '',
+          deleted_at: null,
+          author_id: null,
         });
       });
     }
     return out;
   });
 
-  /** Real items plus virtual occurrences — the source for the feed/projections. */
-  feedItems = $derived([
-    ...(this.currentBudget?.items ?? []),
-    ...this.virtualOccurrences,
-    ...this.productOccurrences,
-  ]);
+  /**
+   * Real items plus virtual occurrences — the source for the feed/projections.
+   * Month scope shows only the occurrences falling in that month; custom
+   * sub-budgets have no schedules of their own, so no virtuals there.
+   */
+  feedItems = $derived.by(() => {
+    if (this.scopeType === 'custom') return this.scopeItems;
+    const virtuals = [...this.virtualOccurrences, ...this.productOccurrences];
+    if (this.scopeType === 'month') {
+      const period = this.scopePeriod!;
+      return [...this.scopeItems, ...virtuals.filter(v => periodOf(v.date) === period)];
+    }
+    return [...this.scopeItems, ...virtuals];
+  });
 
   filteredItems = $derived.by(() => {
-    const budget = this.currentBudget;
-    if (!budget) return [];
     let items = this.feedItems;
 
     // Tab filter
@@ -133,8 +241,9 @@ class BudgetStore {
       items = items.filter(i => i.category === this.categoryFilter);
     }
 
-    // Date range filter
-    if (this.dateRange !== 'all') {
+    // Date range filter (meaningful in the 'all' scope; month scope is already
+    // period-bounded and Tabs hides the control there)
+    if (this.dateRange !== 'all' && this.scopeType === 'all') {
       const now = new Date();
       let monthStart: Date;
       if (this.dateRange === 'this-month') {
@@ -187,13 +296,58 @@ class BudgetStore {
     return result;
   }
 
-  private mergeBudget(budget: Budget) {
-    if (!this.data) return;
-    const idx = this.data.budgets.findIndex(b => b.id === budget.id);
-    if (idx >= 0) {
-      this.data.budgets[idx] = budget;
-    } else {
-      this.data.budgets = [...this.data.budgets, budget];
+  /** Every mutation returns the full live budget list — just swap it in. */
+  private applyBudgets(budgets: Budget[]) {
+    if (this.data) this.data.budgets = budgets;
+  }
+
+  /** Find a real item anywhere in the current data (routing spreads them across sub-budgets). */
+  private findItem(itemId: number): Item | undefined {
+    for (const b of this.data?.budgets ?? []) {
+      const item = b.items.find(i => i.id === itemId);
+      if (item) return item;
+    }
+    return undefined;
+  }
+
+  private persistSelection() {
+    try {
+      localStorage.setItem(LAST_ROOT_KEY, String(this.currentRootId));
+      localStorage.setItem(LAST_SCOPE_KEY, this.currentScope);
+    } catch { /* storage unavailable — selection just won't stick */ }
+  }
+
+  private restoreSelection() {
+    let savedRoot = 0;
+    let savedScope = '';
+    try {
+      savedRoot = Number(localStorage.getItem(LAST_ROOT_KEY) ?? '');
+      savedScope = localStorage.getItem(LAST_SCOPE_KEY) ?? '';
+    } catch { /* ignore */ }
+
+    this.currentRootId = this.roots.some(r => r.id === savedRoot)
+      ? savedRoot
+      : (this.roots[0]?.id ?? 1);
+
+    const scopeValid =
+      savedScope === 'all'
+      || (/^\d{4}-\d{2}$/.test(savedScope))
+      || (savedScope.startsWith('custom:')
+          && this.customBudgets.some(b => b.id === Number(savedScope.slice('custom:'.length))));
+    this.currentScope = scopeValid ? savedScope : currentPeriod();
+  }
+
+  /** Make sure the device-local current month exists as a row (idempotent). */
+  private async ensureCurrentMonth() {
+    if (!this.currentRoot) return;
+    try {
+      const budgets = await this.invokeCmd<Budget[]>('ensure_month_budget', {
+        rootId: this.currentRootId,
+        period: currentPeriod(),
+      });
+      this.applyBudgets(budgets);
+    } catch (e) {
+      this.addLog('err', `ensure_month_budget failed: ${e}`);
     }
   }
 
@@ -201,17 +355,37 @@ class BudgetStore {
     this.loading = true;
     try {
       this.data = await this.invokeCmd<AppData>('load_data', {});
-      if (this.data.budgets.length > 0) this.currentBudgetId = this.data.budgets[0].id;
+      this.restoreSelection();
+      await this.ensureCurrentMonth();
     } catch (e) {
       this.addLog('err', `load_data failed: ${e}`);
     }
     this.loading = false;
   }
 
+  /** Switch to another root budget; the view resets to its current month. */
+  selectRoot(id: number) {
+    if (id === this.currentRootId) return;
+    this.currentRootId = id;
+    this.currentScope = currentPeriod();
+    this.persistSelection();
+    void this.ensureCurrentMonth();
+  }
+
+  setScope(scope: Scope) {
+    this.currentScope = scope;
+    // The period-range filter chips are 'all'-scope only; keep the state in
+    // sync so leaving 'all' doesn't leave a stale filter dot behind.
+    if (scope !== 'all') this.dateRange = 'all';
+    this.persistSelection();
+  }
+
   async addItem(item: { name: string; amount: number; category: string; date: string; description: string; link: string; item_type: string }) {
     try {
-      const budget = await this.invokeCmd<Budget>('add_item', {
-        budgetId: this.currentBudgetId,
+      // Custom sub-budgets keep their items; everything else routes by date.
+      const budgetId = this.scopeType === 'custom' ? this.scopeCustomId! : this.currentRootId;
+      const budgets = await this.invokeCmd<Budget[]>('add_item', {
+        budgetId,
         name: item.name,
         amount: item.amount,
         category: item.category,
@@ -220,8 +394,13 @@ class BudgetStore {
         link: item.link,
         itemType: item.item_type,
       });
-      this.mergeBudget(budget);
-      this.showSnackbar('Запись добавлена ✓');
+      this.applyBudgets(budgets);
+      const itemPeriod = periodOf(item.date);
+      if (this.scopeType === 'month' && itemPeriod !== this.scopePeriod) {
+        this.showSnackbar(`Добавлено в ${periodLabel(itemPeriod)} ✓`);
+      } else {
+        this.showSnackbar('Запись добавлена ✓');
+      }
     } catch (e) {
       this.addLog('err', `add_item failed: ${e}`);
       this.showSnackbar('Ошибка: ' + String(e));
@@ -230,8 +409,7 @@ class BudgetStore {
 
   async updateItem(itemId: number, item: { name: string; amount: number; category: string; date: string; description: string; link: string; item_type: string }) {
     try {
-      const budget = await this.invokeCmd<Budget>('update_item', {
-        budgetId: this.currentBudgetId,
+      const budgets = await this.invokeCmd<Budget[]>('update_item', {
         itemId,
         name: item.name,
         amount: item.amount,
@@ -241,8 +419,13 @@ class BudgetStore {
         link: item.link,
         itemType: item.item_type,
       });
-      this.mergeBudget(budget);
-      this.showSnackbar('Запись обновлена ✓');
+      this.applyBudgets(budgets);
+      const itemPeriod = periodOf(item.date);
+      if (this.scopeType === 'month' && itemPeriod !== this.scopePeriod) {
+        this.showSnackbar(`Перенесено в ${periodLabel(itemPeriod)} ✓`);
+      } else {
+        this.showSnackbar('Запись обновлена ✓');
+      }
     } catch (e) {
       this.addLog('err', `update_item failed: ${e}`);
       this.showSnackbar('Ошибка: ' + String(e));
@@ -251,8 +434,8 @@ class BudgetStore {
 
   async deleteItem(itemId: number) {
     try {
-      const budget = await this.invokeCmd<Budget>('delete_item', { budgetId: this.currentBudgetId, itemId });
-      this.mergeBudget(budget);
+      const budgets = await this.invokeCmd<Budget[]>('delete_item', { itemId });
+      this.applyBudgets(budgets);
       this.showSnackbar('Запись удалена');
     } catch (e) {
       this.addLog('err', `delete_item failed: ${e}`);
@@ -264,15 +447,15 @@ class BudgetStore {
     // Un-completing an item that was materialized from a recurring rule or
     // product means undoing that occurrence: delete it and roll the source back
     // so the virtual occurrence reappears (e.g. cancelled subscription).
-    const existing = this.currentBudget?.items.find(i => i.id === itemId);
+    const existing = this.findItem(itemId);
     if (existing?.completed && existing.source_kind) {
       await this.unmaterializeItem(itemId);
       return;
     }
     try {
-      const budget = await this.invokeCmd<Budget>('toggle_completed', { budgetId: this.currentBudgetId, itemId });
-      this.mergeBudget(budget);
-      const item = budget.items.find(i => i.id === itemId);
+      const budgets = await this.invokeCmd<Budget[]>('toggle_completed', { itemId });
+      this.applyBudgets(budgets);
+      const item = this.findItem(itemId);
       const label = item?.item_type === 'income' ? 'полученное' : 'оплаченное';
       this.showSnackbar(item?.completed ? `Отмечено как ${label}` : 'Возвращено в план');
     } catch (e) {
@@ -284,11 +467,8 @@ class BudgetStore {
   /** Undo a materialized occurrence: remove the real item and revert its source. */
   async unmaterializeItem(itemId: number) {
     try {
-      const result = await this.invokeCmd<UnmaterializeResult>('unmaterialize_item', {
-        budgetId: this.currentBudgetId,
-        itemId,
-      });
-      this.mergeBudget(result.budget);
+      const result = await this.invokeCmd<UnmaterializeResult>('unmaterialize_item', { itemId });
+      this.applyBudgets(result.budgets);
       if (this.data) {
         this.data.recurring = result.recurring;
         this.data.products = result.products;
@@ -313,7 +493,7 @@ class BudgetStore {
   async addRecurring(rule: { name: string; amount: number; category: string; item_type: string; freq: string; anchor_day: number; start_date: string; end_date: string | null; horizon: number; description: string; link: string }) {
     try {
       const recurring = await this.invokeCmd<Recurring[]>('add_recurring', {
-        budgetId: this.currentBudgetId,
+        budgetId: this.currentRootId,
         name: rule.name,
         amount: rule.amount,
         category: rule.category,
@@ -377,7 +557,7 @@ class BudgetStore {
           id: source.id,
           date: source.date,
         });
-        this.mergeBudget(result.budget);
+        this.applyBudgets(result.budgets);
         if (this.data) this.data.recurring = result.recurring;
         this.showSnackbar('Записано ✓');
       } catch (e) {
@@ -400,7 +580,7 @@ class BudgetStore {
         itemType: occ.item_type,
         closes: occ.source.closes ?? false,
       });
-      this.mergeBudget(result.budget);
+      this.applyBudgets(result.budgets);
       if (this.data) this.data.products = result.products;
       this.showSnackbar('Записано ✓');
     } catch (e) {
@@ -428,7 +608,7 @@ class BudgetStore {
   async addProduct(p: { kind: string; name: string; principal: number; annual_rate_bps: number; term_months: number; start_date: string; payment_model: string; early_rate_bps: number | null; horizon: number; category: string; down_payment: number; description: string; link: string }) {
     try {
       const result = await this.invokeCmd<ProductResult>('add_product', {
-        budgetId: this.currentBudgetId,
+        budgetId: this.currentRootId,
         kind: p.kind,
         name: p.name,
         principal: p.principal,
@@ -443,7 +623,7 @@ class BudgetStore {
         description: p.description,
         link: p.link,
       });
-      this.mergeBudget(result.budget);
+      this.applyBudgets(result.budgets);
       if (this.data) this.data.products = result.products;
       const label = p.kind === 'deposit' ? 'Вклад открыт ✓' : p.kind === 'mortgage' ? 'Ипотека добавлена ✓' : 'Кредит добавлен ✓';
       this.showSnackbar(label);
@@ -492,7 +672,7 @@ class BudgetStore {
   async loanExtraPayment(id: number, amount: number, date: string) {
     try {
       const result = await this.invokeCmd<ProductResult>('loan_extra_payment', { id, amount, date });
-      this.mergeBudget(result.budget);
+      this.applyBudgets(result.budgets);
       if (this.data) this.data.products = result.products;
       this.showSnackbar('Досрочный платёж внесён ✓');
     } catch (e) {
@@ -504,7 +684,7 @@ class BudgetStore {
   async closeDeposit(id: number, date: string, payout: number) {
     try {
       const result = await this.invokeCmd<ProductResult>('close_deposit', { id, date, payout });
-      this.mergeBudget(result.budget);
+      this.applyBudgets(result.budgets);
       if (this.data) this.data.products = result.products;
       this.showSnackbar('Вклад закрыт ✓');
     } catch (e) {
@@ -515,9 +695,11 @@ class BudgetStore {
 
   async createBudget(name: string, limit: number, icon: string) {
     try {
-      const budget = await this.invokeCmd<Budget>('create_budget', { name, limit, icon });
-      this.mergeBudget(budget);
-      this.currentBudgetId = budget.id;
+      const before = new Set(this.roots.map(r => r.id));
+      const budgets = await this.invokeCmd<Budget[]>('create_budget', { name, limit, icon });
+      this.applyBudgets(budgets);
+      const created = this.roots.find(r => !before.has(r.id));
+      if (created) this.selectRoot(created.id);
       this.showSnackbar('Бюджет создан ✓');
     } catch (e) {
       this.addLog('err', `create_budget failed: ${e}`);
@@ -525,12 +707,33 @@ class BudgetStore {
     }
   }
 
+  /** Create a custom (themed) sub-budget under the current root. */
+  async createSubBudget(name: string, limit: number, icon: string, reflectInMonths: boolean) {
+    try {
+      const budgets = await this.invokeCmd<Budget[]>('create_sub_budget', {
+        rootId: this.currentRootId,
+        name,
+        limit,
+        icon,
+        reflectInMonths,
+      });
+      this.applyBudgets(budgets);
+      this.showSnackbar('Под-бюджет создан ✓');
+    } catch (e) {
+      this.addLog('err', `create_sub_budget failed: ${e}`);
+      this.showSnackbar('Ошибка: ' + String(e));
+    }
+  }
+
   async deleteBudget(budgetId: number) {
     try {
-      await this.invokeCmd<void>('delete_budget', { budgetId });
-      if (this.data) {
-        this.data.budgets = this.data.budgets.filter(b => b.id !== budgetId);
-        if (this.data.budgets.length > 0) this.currentBudgetId = this.data.budgets[0].id;
+      const budgets = await this.invokeCmd<Budget[]>('delete_budget', { budgetId });
+      this.applyBudgets(budgets);
+      if (budgetId === this.currentRootId) {
+        const first = this.roots[0];
+        if (first) this.selectRoot(first.id);
+      } else if (this.scopeCustomId === budgetId) {
+        this.setScope(currentPeriod());
       }
       this.showSnackbar('Бюджет удалён');
     } catch (e) {
@@ -539,13 +742,48 @@ class BudgetStore {
     }
   }
 
-  async updateBudget(budgetId: number, name: string, limit: number, icon: string) {
+  async updateBudget(budgetId: number, name: string, limit: number, icon: string, reflectInMonths?: boolean) {
     try {
-      const budget = await this.invokeCmd<Budget>('update_budget', { budgetId, name, limit, icon });
-      this.mergeBudget(budget);
+      const target = this.data?.budgets.find(b => b.id === budgetId);
+      const budgets = await this.invokeCmd<Budget[]>('update_budget', {
+        budgetId,
+        name,
+        limit,
+        icon,
+        reflectInMonths: reflectInMonths ?? target?.reflect_in_months ?? false,
+      });
+      this.applyBudgets(budgets);
       this.showSnackbar('Бюджет обновлён ✓');
     } catch (e) {
       this.addLog('err', `update_budget failed: ${e}`);
+      this.showSnackbar('Ошибка: ' + String(e));
+    }
+  }
+
+  /** Set the limit of one month sub-budget (auto-creating its row if needed). */
+  async updateMonthLimit(period: string, limit: number) {
+    try {
+      let month = this.monthBudgets.find(b => b.period === period);
+      if (!month) {
+        const budgets = await this.invokeCmd<Budget[]>('ensure_month_budget', {
+          rootId: this.currentRootId,
+          period,
+        });
+        this.applyBudgets(budgets);
+        month = this.monthBudgets.find(b => b.period === period);
+      }
+      if (!month) throw new Error('месяц не найден');
+      const budgets = await this.invokeCmd<Budget[]>('update_budget', {
+        budgetId: month.id,
+        name: month.name,
+        limit,
+        icon: month.icon,
+        reflectInMonths: false,
+      });
+      this.applyBudgets(budgets);
+      this.showSnackbar('Лимит месяца обновлён ✓');
+    } catch (e) {
+      this.addLog('err', `update month limit failed: ${e}`);
       this.showSnackbar('Ошибка: ' + String(e));
     }
   }
@@ -585,7 +823,7 @@ class BudgetStore {
 
   async exportCsv(): Promise<string | null> {
     try {
-      return await this.invokeCmd<string>('export_csv', { budgetId: this.currentBudgetId });
+      return await this.invokeCmd<string>('export_csv', { budgetId: this.currentRootId });
     } catch (e) {
       this.addLog('err', `export_csv failed: ${e}`);
       this.showSnackbar('Ошибка: ' + String(e));
@@ -606,7 +844,11 @@ class BudgetStore {
   async importJson(json: string) {
     try {
       this.data = await this.invokeCmd<AppData>('import_json', { json });
-      if (this.data.budgets.length > 0) this.currentBudgetId = this.data.budgets[0].id;
+      // Imported data may have entirely different roots — revalidate selection.
+      this.currentRootId = this.roots[0]?.id ?? 1;
+      this.currentScope = currentPeriod();
+      this.persistSelection();
+      await this.ensureCurrentMonth();
       this.showSnackbar('Данные импортированы ✓');
     } catch (e) {
       this.addLog('err', `import_json failed: ${e}`);

@@ -2546,6 +2546,8 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-haptics",
  "tauri-plugin-opener",
+ "time",
+ "uuid",
 ]
 
 [[package]]

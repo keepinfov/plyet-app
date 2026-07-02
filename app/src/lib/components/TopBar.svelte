@@ -6,21 +6,20 @@
   import SettingsModal from './SettingsModal.svelte';
   import { store } from '$lib/stores/budget.svelte';
   import { formatMoney } from '$lib/utils';
+  import { periodLabel } from '$lib/dates';
   import { hapticLight } from '$lib/haptics';
 
-  const effectiveLimit = $derived.by(() => {
-    const b = store.currentBudget;
-    if (!b) return 0;
-    const income = b.items.filter(i => i.item_type === 'income' && i.completed).reduce((s, i) => s + i.amount, 0);
-    return b.limit + income;
-  });
-
+  const scopeLabel = $derived(
+    store.scopeType === 'all' ? 'Весь бюджет'
+      : store.scopeType === 'custom' ? (store.currentCustomBudget?.name ?? '')
+      : periodLabel(store.scopePeriod ?? '')
+  );
 </script>
 
 <div class="top-bar" in:fly={{ y: -40, duration: 300, easing: cubicOut }}>
   <div class="title-wrap">
-    <span class="title">{store.currentBudget?.name ?? 'Бюджеты'}</span>
-    <span class="subtitle">Лимит: {formatMoney(effectiveLimit)}</span>
+    <span class="title">{store.currentRoot?.name ?? 'Бюджеты'}</span>
+    <span class="subtitle">{scopeLabel} · Лимит: {formatMoney(store.effectiveLimit)}</span>
   </div>
   <div class="actions">
     <IconButton onclick={() => { hapticLight(); store.showSettingsModal = true; }} aria-label="Настройки">

@@ -145,6 +145,11 @@ export function productOccurrences(product: Product, horizon: number): Item[] {
     completed: false,
     virtual: true,
     source: { kind: product.kind, id: product.id, date: addMonths(product.start_date, idx + 1), principalPortion, closes },
+    uuid: '',
+    created_at: '',
+    updated_at: '',
+    deleted_at: null,
+    author_id: null,
   });
 
   if (product.kind === 'loan' || product.kind === 'mortgage') {

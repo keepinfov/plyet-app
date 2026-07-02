@@ -15,6 +15,10 @@ products (deposits, loans, mortgages) — with a glassy, theme-able UI.
 
 ## Features
 
+- **Budget hierarchy** — one or more root budgets, each with auto-created
+  monthly sub-budgets (e.g. "Июль 2026") plus optional themed custom
+  sub-budgets ("Отпуск"); the app opens on the current month by default and
+  a "Весь бюджет" view aggregates everything under a root.
 - **Feed** — income/expense items with categories, a donut balance chart, and
   search/filter.
 - **Recurring** — subscriptions, salary, and rent that recur on a schedule.
@@ -23,7 +27,9 @@ products (deposits, loans, mortgages) — with a glassy, theme-able UI.
 - **Theming** — light/dark themes, accent colors, glass blur and transparency
   toggles.
 - **Local-first** — all data lives in a local SQLite database; no account, no
-  cloud.
+  cloud yet. The schema already carries stable UUIDs, timestamps, soft
+  deletes and a members/roles table as groundwork for a future cloud sync
+  and multi-user budgets.
 
 ## Tech stack
 
@@ -79,6 +85,35 @@ pnpm --filter Plyet tauri android build
 | `pnpm build:app`  | Build the frontend                   |
 | `pnpm build:kit`  | Build the `reglass-material` kit     |
 | `pnpm check`      | Type-check all workspace packages    |
+
+## CI & releases
+
+- **`.github/workflows/ci.yml`** runs on every push/PR: frontend type-check
+  (`pnpm check`) plus `cargo fmt --check`, `cargo check` and `cargo test` for
+  the Rust backend, all inside the pinned `nix develop` shell.
+- **`.github/workflows/release.yml`** builds the Android release APK and
+  attaches it to the GitHub Release when a release is published (or on a
+  manual `workflow_dispatch`).
+
+Signing is optional. Without a keystore configured, the workflow still
+produces a working APK — just unsigned, and the artifact/release file is
+named with an `-unsigned` suffix so that's obvious. To get signed releases:
+
+1. Generate a release keystore (once, keep it safe — losing it means you
+   can never update the app under the same signature again):
+   ```sh
+   keytool -genkeypair -v -keystore android-release-key.keystore \
+     -alias plyet -keyalg RSA -keysize 2048 -validity 10000
+   ```
+2. In the repo's **Settings → Secrets and variables → Actions**, add:
+   - `RELEASE_KEYSTORE_BASE64` — `base64 -w0 android-release-key.keystore`
+   - `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`
+3. Re-run the release workflow (or publish a new release) — the APK will now
+   be signed.
+
+For local signed builds, copy
+`app/src-tauri/gen/android/keystore.properties.example` to
+`keystore.properties` next to it and fill in your keystore details.
 
 ## License
 

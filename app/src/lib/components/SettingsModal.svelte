@@ -174,7 +174,7 @@
     if (!csv) return;
     try {
       const save = await getSave();
-      const budgetName = (store.currentBudget?.name ?? 'budget').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_');
+      const budgetName = (store.currentRoot?.name ?? 'budget').replace(/[^a-zA-Zа-яА-Я0-9_-]/g, '_');
       const filePath = await save({
         defaultPath: `${budgetName}.csv`,
         filters: [{ name: 'CSV', extensions: ['csv'] }]

@@ -13,6 +13,7 @@ fn load_data(state: State<Database>) -> Result<AppData, String> {
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 fn add_item(
     state: State<Database>,
     budget_id: u64,
@@ -23,20 +24,29 @@ fn add_item(
     description: String,
     link: String,
     item_type: String,
-) -> Result<Budget, String> {
+) -> Result<Vec<Budget>, String> {
     validate_name(&name)?;
     validate_amount(amount)?;
     validate_date(&date)?;
     validate_description(&description)?;
     validate_link(&link)?;
     validate_item_type(&item_type)?;
-    state.add_item(budget_id, &name, amount, &category, &date, &description, &link, &item_type)
+    state.add_item(
+        budget_id,
+        &name,
+        amount,
+        &category,
+        &date,
+        &description,
+        &link,
+        &item_type,
+    )
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 fn update_item(
     state: State<Database>,
-    budget_id: u64,
     item_id: u64,
     name: String,
     amount: i64,
@@ -45,37 +55,38 @@ fn update_item(
     description: String,
     link: String,
     item_type: String,
-) -> Result<Budget, String> {
+) -> Result<Vec<Budget>, String> {
     validate_name(&name)?;
     validate_amount(amount)?;
     validate_date(&date)?;
     validate_description(&description)?;
     validate_link(&link)?;
     validate_item_type(&item_type)?;
-    state.update_item(budget_id, item_id, &name, amount, &category, &date, &description, &link, &item_type)
+    state.update_item(
+        item_id,
+        &name,
+        amount,
+        &category,
+        &date,
+        &description,
+        &link,
+        &item_type,
+    )
 }
 
 #[tauri::command]
-fn delete_item(state: State<Database>, budget_id: u64, item_id: u64) -> Result<Budget, String> {
-    state.delete_item(budget_id, item_id)
+fn delete_item(state: State<Database>, item_id: u64) -> Result<Vec<Budget>, String> {
+    state.delete_item(item_id)
 }
 
 #[tauri::command]
-fn toggle_completed(
-    state: State<Database>,
-    budget_id: u64,
-    item_id: u64,
-) -> Result<Budget, String> {
-    state.toggle_completed(budget_id, item_id)
+fn toggle_completed(state: State<Database>, item_id: u64) -> Result<Vec<Budget>, String> {
+    state.toggle_completed(item_id)
 }
 
 #[tauri::command]
-fn unmaterialize_item(
-    state: State<Database>,
-    budget_id: u64,
-    item_id: u64,
-) -> Result<UnmaterializeResult, String> {
-    state.unmaterialize_item(budget_id, item_id)
+fn unmaterialize_item(state: State<Database>, item_id: u64) -> Result<UnmaterializeResult, String> {
+    state.unmaterialize_item(item_id)
 }
 
 #[tauri::command]
@@ -107,8 +118,18 @@ fn add_recurring(
     validate_description(&description)?;
     validate_link(&link)?;
     state.add_recurring(
-        budget_id, &name, amount, &category, &item_type, &freq, anchor_day,
-        &start_date, end_date.as_deref(), horizon, &description, &link,
+        budget_id,
+        &name,
+        amount,
+        &category,
+        &item_type,
+        &freq,
+        anchor_day,
+        &start_date,
+        end_date.as_deref(),
+        horizon,
+        &description,
+        &link,
     )
 }
 
@@ -141,8 +162,18 @@ fn update_recurring(
     validate_description(&description)?;
     validate_link(&link)?;
     state.update_recurring(
-        id, &name, amount, &category, &item_type, &freq, anchor_day,
-        &start_date, end_date.as_deref(), horizon, &description, &link,
+        id,
+        &name,
+        amount,
+        &category,
+        &item_type,
+        &freq,
+        anchor_day,
+        &start_date,
+        end_date.as_deref(),
+        horizon,
+        &description,
+        &link,
     )
 }
 
@@ -195,8 +226,20 @@ fn add_product(
     validate_description(&description)?;
     validate_link(&link)?;
     state.add_product(
-        budget_id, &kind, &name, principal, annual_rate_bps, term_months, &start_date,
-        &payment_model, early_rate_bps, horizon, &category, down_payment, &description, &link,
+        budget_id,
+        &kind,
+        &name,
+        principal,
+        annual_rate_bps,
+        term_months,
+        &start_date,
+        &payment_model,
+        early_rate_bps,
+        horizon,
+        &category,
+        down_payment,
+        &description,
+        &link,
     )
 }
 
@@ -232,8 +275,19 @@ fn update_product(
     validate_description(&description)?;
     validate_link(&link)?;
     state.update_product(
-        id, &name, principal, annual_rate_bps, term_months, &start_date,
-        &payment_model, early_rate_bps, horizon, &category, down_payment, &description, &link,
+        id,
+        &name,
+        principal,
+        annual_rate_bps,
+        term_months,
+        &start_date,
+        &payment_model,
+        early_rate_bps,
+        horizon,
+        &category,
+        down_payment,
+        &description,
+        &link,
     )
 }
 
@@ -289,11 +343,26 @@ fn create_budget(
     name: String,
     limit: i64,
     icon: String,
-) -> Result<Budget, String> {
+) -> Result<Vec<Budget>, String> {
     validate_name(&name)?;
     validate_amount(limit)?;
     validate_icon(&icon)?;
     state.create_budget(&name, limit, &icon)
+}
+
+#[tauri::command]
+fn create_sub_budget(
+    state: State<Database>,
+    root_id: u64,
+    name: String,
+    limit: i64,
+    icon: String,
+    reflect_in_months: bool,
+) -> Result<Vec<Budget>, String> {
+    validate_name(&name)?;
+    validate_amount(limit)?;
+    validate_icon(&icon)?;
+    state.create_sub_budget(root_id, &name, limit, &icon, reflect_in_months)
 }
 
 #[tauri::command]
@@ -303,16 +372,27 @@ fn update_budget(
     name: String,
     limit: i64,
     icon: String,
-) -> Result<Budget, String> {
+    reflect_in_months: bool,
+) -> Result<Vec<Budget>, String> {
     validate_name(&name)?;
     validate_amount(limit)?;
     validate_icon(&icon)?;
-    state.update_budget(budget_id, &name, limit, &icon)
+    state.update_budget(budget_id, &name, limit, &icon, reflect_in_months)
 }
 
 #[tauri::command]
-fn delete_budget(state: State<Database>, budget_id: u64) -> Result<(), String> {
+fn delete_budget(state: State<Database>, budget_id: u64) -> Result<Vec<Budget>, String> {
     state.delete_budget(budget_id)
+}
+
+#[tauri::command]
+fn ensure_month_budget(
+    state: State<Database>,
+    root_id: u64,
+    period: String,
+) -> Result<Vec<Budget>, String> {
+    validate_period(&period)?;
+    state.ensure_month_budget_cmd(root_id, &period)
 }
 
 #[tauri::command]
@@ -387,8 +467,8 @@ pub fn run() {
                 .app_local_data_dir()
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
 
-            let database = Database::open(&data_dir)
-                .map_err(|e| Box::<dyn std::error::Error>::from(e))?;
+            let database =
+                Database::open(&data_dir).map_err(|e| Box::<dyn std::error::Error>::from(e))?;
             app.manage(database);
 
             Ok(())
@@ -411,8 +491,10 @@ pub fn run() {
             loan_extra_payment,
             close_deposit,
             create_budget,
+            create_sub_budget,
             update_budget,
             delete_budget,
+            ensure_month_budget,
             add_category,
             update_category,
             delete_category,

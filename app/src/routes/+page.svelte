@@ -3,6 +3,7 @@
   import { onBackButtonPress } from '@tauri-apps/api/app';
   import { invoke } from '@tauri-apps/api/core';
   import TopBar from '$lib/components/TopBar.svelte';
+  import MonthSelector from '$lib/components/MonthSelector.svelte';
   import ChartSection from '$lib/components/ChartSection.svelte';
   import Tabs from '$lib/components/Tabs.svelte';
   import CardsSection from '$lib/components/CardsSection.svelte';
@@ -119,6 +120,7 @@
       {#if store.currentScreen === 'regular'}
         <RegularScreen />
       {:else}
+        <MonthSelector />
         <ChartSection />
         <Tabs />
         <CardsSection {onEdit} />
