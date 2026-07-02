@@ -140,20 +140,22 @@
       </div>
     </div>
 
-    <div class="filter-section">
-      <span class="filter-label">Период</span>
-      <div class="filter-chips">
-        {#each dateRanges as dr}
-          <button
-            class="date-chip tap-btn"
-            class:active={store.dateRange === dr.key}
-            onclick={() => { hapticLight(); store.dateRange = dr.key; }}
-          >
-            {dr.label}
-          </button>
-        {/each}
+    {#if store.scopeType === 'all'}
+      <div class="filter-section">
+        <span class="filter-label">Период</span>
+        <div class="filter-chips">
+          {#each dateRanges as dr}
+            <button
+              class="date-chip tap-btn"
+              class:active={store.dateRange === dr.key}
+              onclick={() => { hapticLight(); store.dateRange = dr.key; }}
+            >
+              {dr.label}
+            </button>
+          {/each}
+        </div>
       </div>
-    </div>
+    {/if}
 
     {#if hasActiveFilters}
       <div transition:fade={{ duration: 150 }}>

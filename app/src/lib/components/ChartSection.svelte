@@ -6,7 +6,6 @@
   import { cubicOut } from 'svelte/easing';
   import { onMount, onDestroy } from 'svelte';
 
-  const budget = $derived(store.currentBudget);
   const categories = $derived(store.data?.categories ?? []);
 
   // Planned totals include virtual (not-yet-materialized) recurring occurrences;
@@ -22,7 +21,7 @@
 
   // Only completed income counts toward budget
   const totalIncome = $derived(
-    budget?.items.filter(i => i.item_type === 'income' && i.completed).reduce((s, i) => s + i.amount, 0) ?? 0
+    store.scopeItems.filter(i => i.item_type === 'income' && i.completed).reduce((s, i) => s + i.amount, 0)
   );
 
   // Chart shows actual (completed) spending
@@ -42,13 +41,13 @@
     allIncomeItems.reduce((s, i) => s + i.amount, 0)
   );
 
-  const effectiveLimit = $derived((budget?.limit ?? 0) + totalIncome);
+  const effectiveLimit = $derived(store.scopeLimit + totalIncome);
   const remaining = $derived(effectiveLimit - totalPlanned);
 
   const plannedExpenses = $derived(totalPlanned - totalSpent);
   const plannedIncome = $derived(totalAllIncome - totalIncome);
   const realBalance = $derived(effectiveLimit - totalSpent);
-  const effectiveLimitAll = $derived((budget?.limit ?? 0) + totalAllIncome);
+  const effectiveLimitAll = $derived(store.scopeLimit + totalAllIncome);
   const plannedBalance = $derived(effectiveLimitAll - totalPlanned);
 
   let centerView = $state<'detail' | 'balance'>('balance');
@@ -140,7 +139,7 @@
   });
 </script>
 
-{#if budget}
+{#if store.currentRoot}
   <div class="chart-section" transition:fly={{ y: 12, duration: 300, easing: cubicOut }}>
     <div class="chart-card">
     <div class="chart-wrap">

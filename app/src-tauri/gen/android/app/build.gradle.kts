@@ -27,16 +27,21 @@ android {
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    val hasKeystore = keystorePropertiesFile.exists()
+
     signingConfigs {
         create("release") {
-            val keystorePropertiesFile = rootProject.file("keystore.properties")
-            val keystoreProperties = Properties()
-            if (keystorePropertiesFile.exists()) {
+            if (hasKeystore) {
+                val keystoreProperties = Properties()
                 keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+                // Prefer separate store/key passwords; fall back to the legacy
+                // single `password` field used by earlier local keystores.
+                val legacyPassword = keystoreProperties["password"] as String?
                 keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["password"] as String
+                keyPassword = (keystoreProperties["keyPassword"] as String?) ?: legacyPassword
                 storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["password"] as String
+                storePassword = (keystoreProperties["storePassword"] as String?) ?: legacyPassword
             }
         }
     }
@@ -54,7 +59,11 @@ android {
             }
         }
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+            // No keystore.properties (e.g. a CI run without secrets configured
+            // yet) → build proceeds unsigned instead of failing.
+            if (hasKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }

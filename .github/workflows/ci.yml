@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Each activity is its own job so the PR shows a separate pass/fail for the
+# frontend typecheck, Rust formatting, Rust compilation and Rust tests. All
+# jobs run in parallel; the Nix store is shared via magic-nix-cache and the
+# cargo build/registry are cached with actions/cache so splitting the Rust
+# checks doesn't pay the compile cost several times over.
+#
+# (Swatinem/rust-cache isn't used because it shells out to `rustc` on the
+# runner to build its cache key, but the toolchain here only exists inside
+# `nix develop` — actions/cache keyed on Cargo.lock is the equivalent.)
+
+jobs:
+  frontend:
+    name: Frontend (svelte-check)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Cache the Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Install dependencies
+        run: nix develop --command pnpm install --frozen-lockfile
+
+      - name: Typecheck (pnpm check)
+        run: nix develop --command pnpm check
+
+  rust-fmt:
+    name: Rust format (cargo fmt)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Cache the Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      # No build cache needed — cargo fmt doesn't compile anything.
+      - name: cargo fmt --check
+        run: nix develop --command bash -c 'cd app/src-tauri && cargo fmt --check'
+
+  rust-check:
+    name: Rust compile (cargo check)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Cache the Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            app/src-tauri/target/
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('app/src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-check-
+
+      - name: cargo check
+        run: nix develop --command bash -c 'cd app/src-tauri && cargo check'
+
+  rust-test:
+    name: Rust tests (cargo test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Cache the Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            app/src-tauri/target/
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('app/src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-test-
+
+      - name: cargo test
+        run: nix develop --command bash -c 'cd app/src-tauri && cargo test'

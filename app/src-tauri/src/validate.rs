@@ -50,7 +50,13 @@ pub fn validate_date(date: &str) -> Result<(), String> {
     let max_day = match month {
         1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
         4 | 6 | 9 | 11 => 30,
-        2 => if leap { 29 } else { 28 },
+        2 => {
+            if leap {
+                29
+            } else {
+                28
+            }
+        }
         _ => unreachable!(),
     };
     if day > max_day {
@@ -167,4 +173,55 @@ pub fn validate_term(months: i64) -> Result<(), String> {
         return Err("Term out of range (1-1200 months)".into());
     }
     Ok(())
+}
+
+pub fn validate_period(period: &str) -> Result<(), String> {
+    // A month key: YYYY-MM, same year range as validate_date.
+    if period.len() != 7 || period.as_bytes()[4] != b'-' {
+        return Err("Invalid period format (expected YYYY-MM)".into());
+    }
+    let year: u32 = period[0..4].parse().map_err(|_| "Invalid year in period")?;
+    let month: u32 = period[5..7]
+        .parse()
+        .map_err(|_| "Invalid month in period")?;
+    if year < 1970 || year > 2100 {
+        return Err("Year out of range (1970-2100)".into());
+    }
+    if month < 1 || month > 12 {
+        return Err("Month out of range (1-12)".into());
+    }
+    Ok(())
+}
+
+pub fn validate_budget_kind(kind: &str) -> Result<(), String> {
+    match kind {
+        "root" | "month" | "custom" => Ok(()),
+        _ => Err("Invalid budget kind (must be 'root', 'month' or 'custom')".into()),
+    }
+}
+
+pub fn validate_uuid_field(uuid: &str) -> Result<(), String> {
+    // Empty is allowed on import (backfilled); otherwise a sane opaque id.
+    if uuid.len() > 64 {
+        return Err("UUID is too long (max 64 characters)".into());
+    }
+    if !uuid.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        return Err("Invalid UUID format".into());
+    }
+    Ok(())
+}
+
+pub fn validate_timestamp_field(ts: &str) -> Result<(), String> {
+    // Empty is allowed on import (backfilled); otherwise an ISO8601-ish string.
+    if ts.len() > 40 {
+        return Err("Timestamp is too long".into());
+    }
+    Ok(())
+}
+
+pub fn validate_member_role(role: &str) -> Result<(), String> {
+    match role {
+        "owner" | "editor" | "viewer" => Ok(()),
+        _ => Err("Invalid member role".into()),
+    }
 }

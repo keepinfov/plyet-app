@@ -151,6 +151,9 @@
             </span>
           {/if}
           <span class="card-date">{formatRelativeDate(item.date)}</span>
+          {#if item.reflectedFrom}
+            <span class="reflect-badge" title="Из под-бюджета «{item.reflectedFrom}»">{item.reflectedFrom}</span>
+          {/if}
           {#if item.link}
             <button class="card-link" onclick={(e: MouseEvent) => { e.stopPropagation(); safeOpenUrl(item.link); }} aria-label="Открыть ссылку">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
@@ -360,6 +363,20 @@
     cursor: pointer;
     font-family: inherit;
     padding: 0;
+  }
+
+  .reflect-badge {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--rg-primary);
+    background: color-mix(in srgb, var(--rg-primary) 12%, transparent);
+    padding: 0.0625rem 0.375rem;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 6rem;
   }
 
   /* ── Price badge ── */

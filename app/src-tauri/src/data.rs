@@ -1,5 +1,12 @@
 use serde::{Deserialize, Serialize};
 
+/// Sync-foundation fields shared by every entity (flattened into each struct
+/// rather than nested, to keep the SQLite mapping and the TS mirror flat):
+/// - `uuid`: stable global identity (local integer ids collide across devices)
+/// - `created_at` / `updated_at`: ISO8601 UTC metadata timestamps; never used
+///   for business logic (business dates are local calendar-date strings)
+/// - `deleted_at`: soft-delete tombstone, kept so a future sync can propagate
+///   deletions; `None` = live row. The UI only ever sees live rows.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Category {
     pub key: String,
@@ -8,14 +15,14 @@ pub struct Category {
     pub color: String,
     #[serde(default)]
     pub is_default: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum ItemStatus {
-    Planned,
-    Conducted,
-    Completed,
+    #[serde(default)]
+    pub uuid: String,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+    #[serde(default)]
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,7 +42,6 @@ pub struct Item {
     #[serde(default)]
     pub description: String,
     pub link: String,
-    pub status: ItemStatus,
     pub item_type: ItemType,
     pub completed: bool,
     /// Link back to the recurring rule / product that materialized this item
@@ -44,8 +50,32 @@ pub struct Item {
     pub source_kind: String,
     #[serde(default)]
     pub source_id: u64,
+    #[serde(default)]
+    pub uuid: String,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+    #[serde(default)]
+    pub deleted_at: Option<String>,
+    /// Member uuid of whoever recorded this item. `None` until multi-user
+    /// arrives; the column exists so sync/attribution won't need a migration.
+    #[serde(default)]
+    pub author_id: Option<String>,
 }
 
+fn default_budget_kind() -> String {
+    "root".into()
+}
+
+/// Budgets form a two-level tree:
+/// - `kind = 'root'`, `parent_id = None` — a top-level budget. Its `limit` is
+///   the default limit inherited by newly auto-created month sub-budgets.
+/// - `kind = 'month'`, `period = Some("YYYY-MM")` — an auto-created month
+///   sub-budget; items are routed here by their business date.
+/// - `kind = 'custom'` — a manually-created themed sub-budget ("Отпуск");
+///   `reflect_in_months` controls whether its items also show up (with a
+///   source badge) in the month views of the same root.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Budget {
     pub id: u64,
@@ -53,11 +83,29 @@ pub struct Budget {
     pub limit: i64,
     pub icon: String,
     pub items: Vec<Item>,
+    #[serde(default)]
+    pub parent_id: Option<u64>,
+    #[serde(default = "default_budget_kind")]
+    pub kind: String,
+    #[serde(default)]
+    pub period: Option<String>,
+    #[serde(default)]
+    pub reflect_in_months: bool,
+    #[serde(default)]
+    pub uuid: String,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+    #[serde(default)]
+    pub deleted_at: Option<String>,
 }
 
-/// A recurring income/expense rule. Future occurrences are computed virtually
-/// on the frontend up to `horizon`; paying one materializes a real `Item` and
-/// advances `last_paid_date`. Editing `amount` only affects future occurrences.
+/// A recurring income/expense rule. Rules belong to a **root** budget; future
+/// occurrences are computed virtually on the frontend up to `horizon`, and
+/// paying one materializes a real `Item` into the month sub-budget matching
+/// the payment date, advancing `last_paid_date`. Editing `amount` only affects
+/// future occurrences.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Recurring {
     pub id: u64,
@@ -80,17 +128,26 @@ pub struct Recurring {
     pub description: String,
     #[serde(default)]
     pub link: String,
+    #[serde(default)]
+    pub uuid: String,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+    #[serde(default)]
+    pub deleted_at: Option<String>,
 }
 
 /// A complex financial product: a deposit (вклад) or a loan/mortgage (кредит).
-/// Like recurring rules, future payments are virtual (computed on the frontend
-/// up to `horizon`); materializing one writes a real `Item` and advances the
-/// product's progress (`payments_made`, `principal_paid`).
+/// Products belong to a **root** budget; like recurring rules, future payments
+/// are virtual (computed on the frontend up to `horizon`), and materializing
+/// one writes a real `Item` into the month sub-budget matching the payment
+/// date, advancing the product's progress (`payments_made`, `principal_paid`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Product {
     pub id: u64,
     pub budget_id: u64,
-    /// 'deposit' | 'loan'
+    /// 'deposit' | 'loan' | 'mortgage'
     pub kind: String,
     pub name: String,
     /// Deposit body or loan amount, in kopecks.
@@ -124,6 +181,31 @@ pub struct Product {
     pub description: String,
     #[serde(default)]
     pub link: String,
+    #[serde(default)]
+    pub uuid: String,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+    #[serde(default)]
+    pub deleted_at: Option<String>,
+}
+
+/// A participant of the (future) shared budget. Only the schema exists today:
+/// a single 'owner' member is seeded so `items.author_id` has something to
+/// point at once attribution UI lands. Roles: 'owner' | 'editor' | 'viewer'.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Member {
+    pub id: u64,
+    pub uuid: String,
+    pub name: String,
+    pub role: String,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+    #[serde(default)]
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -135,45 +217,72 @@ pub struct AppData {
     #[serde(default)]
     pub products: Vec<Product>,
     #[serde(default)]
+    pub members: Vec<Member>,
+    #[serde(default)]
     pub next_id: u64,
 }
 
-/// Result of a product mutation that also affects the budget (materialize,
-/// extra payment, deposit open/close): the affected budget plus the updated
-/// product list.
+/// Versioned JSON export envelope. Legacy exports (plain `AppData`) are still
+/// importable: the importer sniffs for the `schema` field and normalizes
+/// legacy data through the same path as the v5→v6 DB migration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportEnvelope {
+    pub schema: u32,
+    pub exported_at: String,
+    pub data: AppData,
+}
+
+/// Result of a product mutation that also affects budgets (materialize,
+/// extra payment, deposit open/close). Item routing can auto-create a month
+/// sub-budget, so mutations return the full (live) budget list instead of a
+/// single budget — the dataset is small and local, and this removes all
+/// client-side merge bookkeeping.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProductResult {
-    pub budget: Budget,
+    pub budgets: Vec<Budget>,
     pub products: Vec<Product>,
 }
 
-/// Result of materializing a virtual occurrence: the affected budget (with the
-/// new real item) plus the updated recurring list (advanced `last_paid_date`).
+/// Result of materializing a virtual occurrence: all live budgets (the new
+/// real item may have created its month sub-budget) plus the updated
+/// recurring list (advanced `last_paid_date`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaterializeResult {
-    pub budget: Budget,
+    pub budgets: Vec<Budget>,
     pub recurring: Vec<Recurring>,
 }
 
-/// Result of un-materializing a sourced item (un-completing): the affected
-/// budget plus both updated lists, since the rolled-back source may be a
-/// recurring rule or a product.
+/// Result of un-materializing a sourced item (un-completing): all live budgets
+/// plus both updated lists, since the rolled-back source may be a recurring
+/// rule or a product.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UnmaterializeResult {
-    pub budget: Budget,
+    pub budgets: Vec<Budget>,
     pub recurring: Vec<Recurring>,
     pub products: Vec<Product>,
 }
 
 pub fn default_categories() -> Vec<Category> {
+    fn cat(key: &str, name: &str, icon: &str, color: &str) -> Category {
+        Category {
+            key: key.into(),
+            name: name.into(),
+            icon: icon.into(),
+            color: color.into(),
+            is_default: true,
+            uuid: String::new(),
+            created_at: String::new(),
+            updated_at: String::new(),
+            deleted_at: None,
+        }
+    }
     vec![
-        Category { key: "food".into(), name: "Еда".into(), icon: "food".into(), color: "#FF6D00".into(), is_default: true },
-        Category { key: "transport".into(), name: "Транспорт".into(), icon: "transport".into(), color: "#1A73E8".into(), is_default: true },
-        Category { key: "entertainment".into(), name: "Развлечения".into(), icon: "entertainment".into(), color: "#D93025".into(), is_default: true },
-        Category { key: "shopping".into(), name: "Покупки".into(), icon: "shopping".into(), color: "#E91E63".into(), is_default: true },
-        Category { key: "bills".into(), name: "Коммунальные".into(), icon: "bills".into(), color: "#7C4DFF".into(), is_default: true },
-        Category { key: "salary".into(), name: "Зарплата".into(), icon: "salary".into(), color: "#0D904F".into(), is_default: true },
-        Category { key: "other".into(), name: "Другое".into(), icon: "other".into(), color: "#00ACC1".into(), is_default: true },
+        cat("food", "Еда", "food", "#FF6D00"),
+        cat("transport", "Транспорт", "transport", "#1A73E8"),
+        cat("entertainment", "Развлечения", "entertainment", "#D93025"),
+        cat("shopping", "Покупки", "shopping", "#E91E63"),
+        cat("bills", "Коммунальные", "bills", "#7C4DFF"),
+        cat("salary", "Зарплата", "salary", "#0D904F"),
+        cat("other", "Другое", "other", "#00ACC1"),
     ]
 }
-
