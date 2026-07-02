@@ -4,8 +4,8 @@
   "description": "Plyet - a local-first personal budget app (Tauri + SvelteKit)",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
+    "dev": "pnpm --filter reglass-material exec svelte-kit sync && vite dev",
+    "build": "pnpm --filter reglass-material exec svelte-kit sync && vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
